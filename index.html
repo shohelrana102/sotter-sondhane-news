@@ -1,14 +1,17 @@
-<!doctype html><html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>সত্যের সন্ধানে সব সময়</title><link rel="stylesheet" href="/style.css"></head><body>
-<header><div class="wrap top"><div><div class="brand">সত্যের সন্ধানে সব সময়</div><div class="tag">সত্য প্রকাশে আপসহীন</div></div><a class="adminlink" href="/admin/login">অ্যাডমিন</a></div></header>
-<nav><div class="wrap">সর্বশেষ সংবাদ <span> | </span> বাংলাদেশ <span> | </span> সারাদেশ <span> | </span> মতামত</div></nav>
-<main class="wrap"><section class="hero"><div><span class="kicker">জনতার কণ্ঠ • সত্যের পক্ষে</span><h1>আপনার এলাকার খবর আপনিই জানান</h1><p>নিউজ জমা দিন। যাচাই ও অ্যাডমিন অনুমোদনের পর তা সবার জন্য প্রকাশিত হবে।</p></div></section>
-<section class="submit"><h2>নিউজ জমা দিন</h2><form id="newsForm"><label>নিউজের শিরোনাম<input name="title" maxlength="180" required></label><label>বিস্তারিত<textarea name="body" rows="6" maxlength="15000" required></textarea></label><div class="two"><label>প্রতিবেদকের নাম<input name="author" maxlength="80" required></label><label>মোবাইল (ঐচ্ছিক)<input name="phone" maxlength="30"></label></div><label>ছবির লিংক (ঐচ্ছিক)<input name="image_url" type="url" placeholder="https://..."></label><button>নিউজ জমা দিন</button><p id="feedback" aria-live="polite"></p></form></section>
-<section><div class="sectionhead"><h2>প্রকাশিত সংবাদ</h2><span>অনুমোদিত নিউজ</span></div><div id="news" class="newsgrid">লোড হচ্ছে...</div></section></main>
-<footer><div class="wrap">© <span id="year"></span> সত্যের সন্ধানে সব সময় — পাঠকের তথ্য যাচাই করে প্রকাশ করুন।</div></footer>
-<script>
-document.getElementById('year').textContent=new Date().getFullYear();
-const form=document.getElementById('newsForm'), feedback=document.getElementById('feedback');
-form.addEventListener('submit',async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(form));const r=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const j=await r.json();feedback.textContent=j.message||j.error+(j.match?' — মিল পাওয়া গেছে: '+j.match:'');feedback.className=r.ok?'success':'error';if(r.ok)form.reset();});
-async function load(){const r=await fetch('/api/news');const items=await r.json();const el=document.getElementById('news');el.innerHTML='';if(!items.length){el.textContent='এখনো কোনো সংবাদ প্রকাশিত হয়নি।';return;}for(const n of items){const a=document.createElement('article');a.className='news';const h=document.createElement('h3');h.textContent=n.title;const p=document.createElement('p');p.textContent=n.body.length>360?n.body.slice(0,360)+'…':n.body;const meta=document.createElement('small');meta.textContent='প্রতিবেদক: '+n.author+' • '+new Date(n.created_at+'Z').toLocaleString('bn-BD');a.append(h,p,meta);if(n.image_url){const im=document.createElement('img');im.src=n.image_url;im.alt='সংবাদের ছবি';im.loading='lazy';a.prepend(im);}el.append(a);}}
-load();
-</script></body></html>
+<!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="সত্যের সন্ধানে সব সময় — সত্য প্রকাশে আপসহীন"><title>সত্যের সন্ধানে সব সময়</title>
+<link rel="stylesheet" href="style.css"></head><body>
+<header><div class="container head"><a class="logo" href="/">সত্যের সন্ধানে <span>সব সময়</span><small>সত্য প্রকাশে আপসহীন</small></a><a class="admin-link" href="admin.html">অ্যাডমিন লগইন</a></div></header>
+<nav><div class="container navinner"><span>সর্বশেষ সংবাদ</span><span>বাংলাদেশ</span><span>সারাদেশ</span><span>জনতার কথা</span></div></nav>
+<main class="container">
+<section class="hero"><div><span class="eyebrow">জনতার কণ্ঠ • সত্যের পক্ষে</span><h1>আপনার এলাকার খবর<br>আপনিই জানান</h1><p>আপনার পাঠানো সংবাদ যাচাই ও অ্যাডমিন অনুমোদনের পর প্রকাশিত হবে।</p><a class="button light" href="#submit">নিউজ জমা দিন</a></div></section>
+<section id="submit" class="panel"><div class="section-title"><div><span class="eyebrow dark">পাঠক সাংবাদিকতা</span><h2>নিউজ জমা দিন</h2></div><span class="pill">প্রকাশের আগে যাচাই</span></div>
+<form id="submitForm"><div class="grid2"><label>নিউজের শিরোনাম<input name="title" maxlength="180" required placeholder="সংবাদের শিরোনাম লিখুন"></label><label>আপনার নাম<input name="author" maxlength="80" required placeholder="প্রতিবেদকের নাম"></label></div>
+<label>নিউজের বিস্তারিত<textarea name="body" rows="6" maxlength="12000" required placeholder="ঘটনার স্থান, সময়, বিস্তারিত তথ্য ও সূত্র লিখুন"></textarea></label>
+<div class="grid2"><label>মোবাইল নম্বর (ঐচ্ছিক)<input name="phone" maxlength="30" placeholder="01XXXXXXXXX"></label><label>ছবির লিংক (ঐচ্ছিক)<input name="image_url" type="url" maxlength="500" placeholder="https://..."></label></div>
+<label class="check"><input type="checkbox" required> আমি নিশ্চিত করছি, তথ্যগুলো আমার জানা মতে সঠিক এবং অন্যের লেখা কপি করে দিচ্ছি না।</label>
+<button class="button" type="submit">নিউজ জমা দিন</button><p id="formMsg" role="status"></p></form></section>
+<section class="feed"><div class="section-title"><div><span class="eyebrow dark">সর্বশেষ আপডেট</span><h2>প্রকাশিত সংবাদ</h2></div><button id="refresh" class="button outline">রিফ্রেশ</button></div><div id="newsList" class="news-grid"><p>সংবাদ লোড হচ্ছে...</p></div></section>
+</main><footer><div class="container">© <span id="year"></span> সত্যের সন্ধানে সব সময় · পাঠানো সংবাদ যাচাই করে প্রকাশ করা হয়।</div></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="app.js"></script></body></html>
