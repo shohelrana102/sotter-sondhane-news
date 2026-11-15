@@ -131,8 +131,7 @@ form.addEventListener("submit",async e=>{
  btn.disabled=false;
 
  if(error){
-  message(msg,error.message.includes("duplicate")?"সম্ভাব্য কপি নিউজ শনাক্ত হয়েছে; জমা নেওয়া হয়নি।":"নিউজ জমা হয়নি: "+error.message,"error");
-  return;
+
  }
 
  message(msg,data?.message||"নিউজ জমা হয়েছে। অ্যাডমিন অনুমোদনের পর প্রকাশিত হবে।","success");
