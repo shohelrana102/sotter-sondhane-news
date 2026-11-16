@@ -14,8 +14,8 @@ const db = ready && window.supabase
 
 const form = document.querySelector("#submitForm");
 const msg = document.querySelector("#formMsg");
-const year = document.querySelector("#year");
 
+const year = document.querySelector("#year");
 if (year) year.textContent = new Date().getFullYear();
 
 function message(el, text, kind = "") {
@@ -26,13 +26,14 @@ function message(el, text, kind = "") {
 
 // WhatsApp যোগাযোগ বাটন
 const whatsappContact = document.createElement("a");
-whatsappContact.href = "https://wa.me/8801518739647?text=" +
+whatsappContact.href =
+  "https://wa.me/8801518739647?text=" +
   encodeURIComponent("আসসালামু আলাইকুম। সত্যের সন্ধানে সব সময় নিউজ পোর্টাল থেকে যোগাযোগ করছি।");
 whatsappContact.textContent = "☘ WhatsApp-এ যোগাযোগ করুন";
 whatsappContact.target = "_blank";
 whatsappContact.rel = "noopener noreferrer";
 whatsappContact.style.cssText =
-  "position:fixed;bottom:20px;right:15px;z-index:9999;background:#25D366;color:white;padding:13px 17px;border-radius:30px;text-decoration:none;font-weight:bold;box-shadow:0 3px 12px #777;font-size:14px;";
+  "position:fixed;bottom:18px;right:12px;z-index:9999;background:#25D366;color:white;padding:12px 15px;border-radius:30px;text-decoration:none;font-weight:bold;box-shadow:0 3px 12px #777;font-size:13px;";
 document.body.appendChild(whatsappContact);
 
 
@@ -47,9 +48,11 @@ async function copyLink(url) {
 }
 
 
-// সংবাদ শেয়ার করার বাটন
+// শেয়ার বাটন
 function addShareButtons(card, news) {
-  const url = location.origin + location.pathname +
+  const url =
+    location.origin +
+    location.pathname +
     "#news-" + encodeURIComponent(news.id);
 
   const title = news.title || "সত্যের সন্ধানে সব সময়";
@@ -67,21 +70,18 @@ function addShareButtons(card, news) {
     shareBox.appendChild(a);
   }
 
-  // Facebook
   makeLink(
     "Facebook",
     "https://www.facebook.com/sharer/sharer.php?u=" +
       encodeURIComponent(url)
   );
 
-  // WhatsApp
   makeLink(
     "WhatsApp",
     "https://wa.me/?text=" +
       encodeURIComponent(title + "\n" + url)
   );
 
-  // Twitter / X
   makeLink(
     "Twitter / X",
     "https://twitter.com/intent/tweet?text=" +
@@ -89,34 +89,6 @@ function addShareButtons(card, news) {
       "&url=" + encodeURIComponent(url)
   );
 
-  // Instagram
-  const instagram = document.createElement("button");
-  instagram.type = "button";
-  instagram.className = "button outline";
-  instagram.textContent = "Instagram";
-
-  instagram.addEventListener("click", async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: title,
-          text: title + "\n" + url,
-          url: url
-        });
-      } else {
-        await copyLink(url);
-        alert("লিংক কপি হয়েছে। Instagram খুলে শেয়ার করুন।");
-      }
-    } catch (e) {
-      if (e.name !== "AbortError") {
-        await copyLink(url);
-      }
-    }
-  });
-
-  shareBox.appendChild(instagram);
-
-  // সাধারণ Share
   const share = document.createElement("button");
   share.type = "button";
   share.className = "button";
@@ -126,9 +98,9 @@ function addShareButtons(card, news) {
     try {
       if (navigator.share) {
         await navigator.share({
-          title: title,
+          title,
           text: title,
-          url: url
+          url
         });
       } else {
         await copyLink(url);
@@ -155,6 +127,8 @@ async function loadNews() {
     return;
   }
 
+  list.textContent = "সংবাদ লোড হচ্ছে...";
+
   const { data, error } = await db
     .from("news")
     .select("id,title,body,author,image_url,created_at")
@@ -169,7 +143,7 @@ async function loadNews() {
 
   list.innerHTML = "";
 
-  if (!data || !data.length) {
+  if (!data || data.length === 0) {
     list.textContent = "এখনো কোনো সংবাদ প্রকাশিত হয়নি।";
     return;
   }
@@ -179,34 +153,38 @@ async function loadNews() {
     card.className = "news-card";
     card.id = "news-" + n.id;
 
+    const h = document.createElement("h3");
+    h.textContent = n.title || "শিরোনাম নেই";
+    card.appendChild(h);
+
+    // শিরোনামের নিচে ছবি
     if (n.image_url) {
       const im = document.createElement("img");
       im.src = n.image_url;
-      im.alt = "সংবাদের ছবি";
+      im.alt = n.title || "সংবাদের ছবি";
       im.loading = "lazy";
-      im.onerror = () => im.remove();
+      im.onerror = () => {
+        im.alt = "ছবিটি লোড করা যায়নি";
+        im.style.display = "none";
+      };
       card.appendChild(im);
     }
 
-    const h = document.createElement("h3");
-    h.textContent = n.title;
-
     const p = document.createElement("p");
     const body = String(n.body || "");
-
-    p.textContent = body.length > 480
-      ? body.slice(0, 480) + "…"
+    p.textContent = body.length > 1000
+      ? body.slice(0, 1000) + "…"
       : body;
 
     const meta = document.createElement("small");
     meta.textContent =
-      "প্রতিবেদক: " + (n.author || "") + " · " +
+      "প্রতিবেদক: " + (n.author || "অজানা") +
+      " · " +
       new Date(n.created_at).toLocaleString("bn-BD");
 
-    card.append(h, p, meta);
+    card.append(p, meta);
 
     addShareButtons(card, n);
-
     list.appendChild(card);
   }
 
@@ -247,7 +225,9 @@ async function uploadNewsImage(file) {
   }[file.type];
 
   const fileName =
-    Date.now() + "-" + crypto.randomUUID() + "." + extension;
+    Date.now() + "-" +
+    Math.random().toString(36).slice(2) +
+    "." + extension;
 
   const { data, error } = await db.storage
     .from("news-images")
@@ -305,12 +285,7 @@ if (form) {
       });
 
       if (error) {
-        message(
-          msg,
-          "নিউজ জমা হয়নি: " + error.message,
-          "error"
-        );
-        return;
+        throw new Error("নিউজ জমা হয়নি: " + error.message);
       }
 
       message(
