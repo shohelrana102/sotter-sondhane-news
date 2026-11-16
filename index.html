@@ -1,4 +1,5 @@
 
+
 <!doctype html>
 <html lang="bn">
 <head>
@@ -48,10 +49,12 @@
 </div>
 
 <form id="submitForm">
+
 <div class="grid2">
 <label>নিউজের শিরোনাম
 <input name="title" maxlength="180" required placeholder="সংবাদের শিরোনাম লিখুন">
 </label>
+
 <label>আপনার নাম
 <input name="author" maxlength="80" required placeholder="প্রতিবেদকের নাম">
 </label>
@@ -65,8 +68,14 @@
 <label>মোবাইল নম্বর (ঐচ্ছিক)
 <input name="phone" maxlength="30" placeholder="01XXXXXXXXX">
 </label>
-<label>ছবির লিংক (ঐচ্ছিক)
-<input name="image_url" type="url" maxlength="500" placeholder="https://...">
+
+<label>সংবাদের ছবি (ঐচ্ছিক)
+<input
+type="file"
+name="image_file"
+id="imageFile"
+accept="image/*">
+<small>মোবাইলের গ্যালারি থেকে ছবি নির্বাচন করুন। সর্বোচ্চ 5 MB।</small>
 </label>
 </div>
 
@@ -77,6 +86,7 @@
 
 <button class="button" type="submit">নিউজ জমা দিন</button>
 <p id="formMsg" role="status"></p>
+
 </form>
 </section>
 
