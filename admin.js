@@ -19,26 +19,19 @@ const loginMsg = document.querySelector("#loginMsg");
 let currentStatus = "pending";
 
 function say(el, text, kind = "") {
-  if (!el) return;
-  el.textContent = text;
-  el.className = kind;
+  if (el) {
+    el.textContent = text;
+    el.className = kind;
+  }
 }
 
 
 // অ্যাডমিন যাচাই
 async function enter() {
-  const { data: userData, error: userError } =
-    await db.auth.getUser();
+  const { data, error } = await db.auth.getUser();
 
-  if (userError) {
-    say(loginMsg, "ব্যবহারকারী যাচাই করা যায়নি: " + userError.message, "error");
-    return;
-  }
-
-  const user = userData.user;
-
-  if (!user) {
-    say(loginMsg, "আবার লগইন করুন।", "error");
+  if (error || !data.user) {
+    say(loginMsg, "লগইন যাচাই করা যায়নি। আবার চেষ্টা করুন।", "error");
     return;
   }
 
@@ -46,53 +39,40 @@ async function enter() {
     await db.rpc("is_portal_admin");
 
   if (roleError) {
-    say(
-      loginMsg,
-      "অ্যাডমিন যাচাই করা যায়নি: " + roleError.message,
-      "error"
-    );
+    say(loginMsg, "অ্যাডমিন যাচাই সমস্যা: " + roleError.message, "error");
     return;
   }
 
   if (role !== true) {
-    say(
-      loginMsg,
-      "এই ইমেইলটি অ্যাডমিন হিসেবে অনুমোদিত নয়।",
-      "error"
-    );
+    say(loginMsg, "আপনি অ্যাডমিন হিসেবে অনুমোদিত নন।", "error");
     return;
   }
 
   loginPanel.hidden = true;
   dash.hidden = false;
+  document.querySelector("#who").textContent = data.user.email;
 
-  document.querySelector("#who").textContent = user.email;
-
+  createRequestSection();
+  loadRequests();
   loadAdmin();
 }
 
 
-// শুরুতে লগইন অবস্থা যাচাই
+// লগইন অবস্থা
 async function init() {
   if (!db) {
-    say(
-      loginMsg,
-      "config.js ফাইলে Supabase URL ও Anon Key যাচাই করুন।",
-      "error"
-    );
+    say(loginMsg, "config.js-এর Supabase সেটিংস যাচাই করুন।", "error");
     return;
   }
 
   const { data, error } = await db.auth.getSession();
 
   if (error) {
-    say(loginMsg, "সেশন যাচাই করা যায়নি: " + error.message, "error");
+    say(loginMsg, error.message, "error");
     return;
   }
 
-  if (data.session) {
-    await enter();
-  }
+  if (data.session) await enter();
 }
 
 
@@ -100,11 +80,8 @@ async function init() {
 document.querySelector("#loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  if (!db) return;
-
-  const form = e.currentTarget;
-  const d = Object.fromEntries(new FormData(form));
-  const btn = form.querySelector('button[type="submit"]');
+  const d = Object.fromEntries(new FormData(e.currentTarget));
+  const btn = e.currentTarget.querySelector('button[type="submit"]');
 
   if (btn) btn.disabled = true;
 
@@ -116,9 +93,7 @@ document.querySelector("#loginForm").addEventListener("submit", async (e) => {
       password: d.password
     });
 
-    if (error) {
-      throw new Error(error.message);
-    }
+    if (error) throw error;
 
     await enter();
 
@@ -138,25 +113,152 @@ document.querySelector("#logout").addEventListener("click", async () => {
 });
 
 
-// নিউজের তালিকা পরিবর্তন
+// আবেদন দেখানোর বিভাগ
+function createRequestSection() {
+  if (document.querySelector("#requestSection")) return;
+
+  const section = document.createElement("section");
+  section.id = "requestSection";
+  section.style.cssText =
+    "background:white;padding:18px;border-radius:12px;margin:20px 0;";
+
+  const heading = document.createElement("h2");
+  heading.textContent = "👥 রিপোর্টার অ্যাকাউন্টের আবেদন";
+
+  const refresh = document.createElement("button");
+  refresh.className = "button outline";
+  refresh.textContent = "আবেদন রিফ্রেশ করুন";
+  refresh.onclick = loadRequests;
+
+  const list = document.createElement("div");
+  list.id = "requestList";
+  list.textContent = "আবেদন লোড হচ্ছে...";
+
+  section.append(heading, refresh, list);
+
+  dash.insertBefore(section, dash.firstChild);
+}
+
+
+// আবেদন লোড
+async function loadRequests() {
+  const box = document.querySelector("#requestList");
+  if (!box) return;
+
+  box.textContent = "আবেদন লোড হচ্ছে...";
+
+  const { data, error } = await db
+    .from("registration_requests")
+    .select("*")
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    box.textContent = "আবেদন লোড করা যায়নি: " + error.message;
+    return;
+  }
+
+  box.innerHTML = "";
+
+  if (!data || data.length === 0) {
+    box.textContent = "এখনো কোনো নতুন আবেদন নেই।";
+    return;
+  }
+
+  for (const request of data) {
+    const card = document.createElement("article");
+    card.style.cssText =
+      "border:1px solid #ddd;padding:15px;border-radius:10px;margin:12px 0;";
+
+    const name = document.createElement("h3");
+    name.textContent = request.full_name;
+
+    const email = document.createElement("p");
+    email.textContent = "ইমেইল: " + request.email;
+
+    const phone = document.createElement("p");
+    phone.textContent = "মোবাইল: " + (request.phone || "দেওয়া হয়নি");
+
+    const date = document.createElement("small");
+    date.textContent =
+      "আবেদনের তারিখ: " +
+      new Date(request.created_at).toLocaleString("bn-BD");
+
+    const info = document.createElement("p");
+    info.textContent =
+      "অনুমোদনের পর Supabase-এ অ্যাকাউন্ট তৈরি করতে হবে।";
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const approve = document.createElement("button");
+    approve.className = "button";
+    approve.textContent = "অনুমোদন";
+
+    approve.onclick = async () => {
+      if (!confirm(
+        "এই আবেদন অনুমোদন করবেন? এরপর Supabase-এ অ্যাকাউন্ট তৈরি করতে হবে।"
+      )) return;
+
+      await changeRequestStatus(request.id, "approved");
+    };
+
+    const reject = document.createElement("button");
+    reject.className = "button outline";
+    reject.textContent = "বাতিল";
+
+    reject.onclick = async () => {
+      if (!confirm("এই আবেদন বাতিল করবেন?")) return;
+
+      await changeRequestStatus(request.id, "rejected");
+    };
+
+    actions.append(approve, reject);
+    card.append(name, email, phone, date, info, actions);
+    box.appendChild(card);
+  }
+}
+
+
+// আবেদনের অবস্থা পরিবর্তন
+async function changeRequestStatus(id, status) {
+  const { error } = await db
+    .from("registration_requests")
+    .update({ status })
+    .eq("id", id);
+
+  if (error) {
+    alert("পরিবর্তন করা যায়নি: " + error.message);
+    return;
+  }
+
+  alert(
+    status === "approved"
+      ? "আবেদন অনুমোদিত হয়েছে। এবার Supabase Authentication থেকে অ্যাকাউন্ট তৈরি করতে হবে।"
+      : "আবেদন বাতিল করা হয়েছে।"
+  );
+
+  loadRequests();
+}
+
+
+// নিউজের ট্যাব
 document.querySelectorAll(".tab").forEach((b) => {
   b.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach((x) => {
-      x.classList.remove("active");
-    });
+    document.querySelectorAll(".tab").forEach((x) =>
+      x.classList.remove("active")
+    );
 
     b.classList.add("active");
     currentStatus = b.dataset.status;
-
     loadAdmin();
   });
 });
 
 
-// অ্যাডমিন নিউজ লোড
+// নিউজ লোড
 async function loadAdmin() {
   const box = document.querySelector("#adminNews");
-
   box.textContent = "নিউজ লোড হচ্ছে...";
 
   const { data, error } = await db
@@ -181,97 +283,63 @@ async function loadAdmin() {
     const card = document.createElement("article");
     card.className = "admin-card";
 
-    // শিরোনাম
     const h = document.createElement("h3");
     h.textContent = n.title || "শিরোনাম নেই";
     card.appendChild(h);
 
-    // শিরোনামের নিচে সংবাদের ছবি
     if (n.image_url) {
       const img = document.createElement("img");
-
       img.src = n.image_url;
       img.alt = n.title || "সংবাদের ছবি";
       img.loading = "lazy";
-
-      img.style.width = "100%";
-      img.style.maxHeight = "320px";
-      img.style.objectFit = "cover";
-      img.style.borderRadius = "10px";
-      img.style.marginBottom = "12px";
-
-      img.onerror = () => {
-        img.alt = "ছবিটি লোড করা যায়নি";
-        img.style.display = "none";
-      };
-
+      img.style.cssText =
+        "width:100%;max-height:320px;object-fit:cover;border-radius:10px;";
       card.appendChild(img);
     }
 
-    // নিউজের বিবরণ
     const p = document.createElement("p");
     p.textContent = n.body || "";
-    card.appendChild(p);
 
-    // প্রতিবেদকের তথ্য
     const meta = document.createElement("small");
-
     meta.textContent =
-      "প্রতিবেদক: " + (n.author || "অজানা") +
+      "প্রতিবেদক: " + (n.author || "নেই") +
       " · ফোন: " + (n.phone || "নেই") +
-      " · " +
-      new Date(n.created_at).toLocaleString("bn-BD");
+      " · " + new Date(n.created_at).toLocaleString("bn-BD");
 
-    card.appendChild(meta);
-
-    // অনুমোদন ও বাতিল
     const actions = document.createElement("div");
     actions.className = "actions";
 
     if (currentStatus !== "approved") {
       const approve = document.createElement("button");
-
       approve.className = "button";
       approve.textContent = "অনুমোদন ও প্রকাশ";
       approve.onclick = () => updateStatus(n.id, "approved");
-
       actions.appendChild(approve);
     }
 
     if (currentStatus !== "rejected") {
       const reject = document.createElement("button");
-
       reject.className = "button outline";
       reject.textContent = "বাতিল";
       reject.onclick = () => updateStatus(n.id, "rejected");
-
       actions.appendChild(reject);
     }
 
-    // স্থায়ীভাবে ডিলিট
     const del = document.createElement("button");
-
     del.className = "button danger";
     del.textContent = "স্থায়ীভাবে ডিলিট";
 
     del.onclick = async () => {
-      if (confirm("এই নিউজ স্থায়ীভাবে মুছে ফেলবেন?")) {
-        const { error } = await db
-          .from("news")
-          .delete()
-          .eq("id", n.id);
+      if (!confirm("এই নিউজ স্থায়ীভাবে মুছে ফেলবেন?")) return;
 
-        if (error) {
-          alert("ডিলিট করা যায়নি: " + error.message);
-        } else {
-          loadAdmin();
-        }
-      }
+      const { error } = await db.from("news").delete().eq("id", n.id);
+
+      if (error) alert(error.message);
+      else loadAdmin();
     };
 
     actions.appendChild(del);
-    card.appendChild(actions);
-
+    card.append(h, p, meta, actions);
     box.appendChild(card);
   }
 }
@@ -284,13 +352,8 @@ async function updateStatus(id, status) {
     .update({ status })
     .eq("id", id);
 
-  if (error) {
-    alert("পরিবর্তন করা যায়নি: " + error.message);
-  } else {
-    loadAdmin();
-  }
+  if (error) alert(error.message);
+  else loadAdmin();
 }
 
-
-// চালু
 init();
