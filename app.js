@@ -1,4 +1,5 @@
 
+
 const cfg = window.PORTAL_CONFIG || {};
 const ready = cfg.SUPABASE_URL?.startsWith("https://") &&
   cfg.SUPABASE_ANON_KEY?.length > 30;
