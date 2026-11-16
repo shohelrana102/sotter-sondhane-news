@@ -14,4 +14,21 @@
 <button class="button" type="submit">নিউজ জমা দিন</button><p id="formMsg" role="status"></p></form></section>
 <section class="feed"><div class="section-title"><div><span class="eyebrow dark">সর্বশেষ আপডেট</span><h2>প্রকাশিত সংবাদ</h2></div><button id="refresh" class="button outline">রিফ্রেশ</button></div><div id="newsList" class="news-grid"><p>সংবাদ লোড হচ্ছে...</p></div></section>
 </main><footer><div class="container">© <span id="year"></span> সত্যের সন্ধানে সব সময় · পাঠানো সংবাদ যাচাই করে প্রকাশ করা হয়।</div></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><!doctype html>
+<html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="সত্যের সন্ধানে সব সময় — সত্য প্রকাশে আপসহীন"><title>সত্যের সন্ধানে সব সময়</title>
+<link rel="stylesheet" href="style.css"></head><body>
+<header><div class="container head"><a class="logo" href="/">সত্যের সন্ধানে <span>সব সময়</span><small>সত্য প্রকাশে আপসহীন</small></a><a class="admin-link" href="admin.html">অ্যাডমিন লগইন</a></div></header>
+<nav><div class="container navinner"><span>সর্বশেষ সংবাদ</span><span>বাংলাদেশ</span><span>সারাদেশ</span><span>জনতার কথা</span></div></nav>
+<main class="container">
+<section class="hero"><div><span class="eyebrow">জনতার কণ্ঠ • সত্যের পক্ষে</span><h1>আপনার এলাকার খবর<br>আপনিই জানান</h1><p>আপনার পাঠানো সংবাদ যাচাই ও অ্যাডমিন অনুমোদনের পর প্রকাশিত হবে।</p><a class="button light" href="#submit">নিউজ জমা দিন</a></div></section>
+<section id="submit" class="panel"><div class="section-title"><div><span class="eyebrow dark">পাঠক সাংবাদিকতা</span><h2>নিউজ জমা দিন</h2></div><span class="pill">প্রকাশের আগে যাচাই</span></div>
+<form id="submitForm"><div class="grid2"><label>নিউজের শিরোনাম<input name="title" maxlength="180" required placeholder="সংবাদের শিরোনাম লিখুন"></label><label>আপনার নাম<input name="author" maxlength="80" required placeholder="প্রতিবেদকের নাম"></label></div>
+<label>নিউজের বিস্তারিত<textarea name="body" rows="6" maxlength="12000" required placeholder="ঘটনার স্থান, সময়, বিস্তারিত তথ্য ও সূত্র লিখুন"></textarea></label>
+<div class="grid2"><label>মোবাইল নম্বর (ঐচ্ছিক)<input name="phone" maxlength="30" placeholder="01XXXXXXXXX"></label><label>ছবির লিংক (ঐচ্ছিক)<input name="image_url" type="url" maxlength="500" placeholder="https://..."></label></div>
+<label class="check"><input type="checkbox" required> আমি নিশ্চিত করছি, তথ্যগুলো আমার জানা মতে সঠিক এবং অন্যের লেখা কপি করে দিচ্ছি না।</label>
+<button class="button" type="submit">নিউজ জমা দিন</button><p id="formMsg" role="status"></p></form></section>
+<section class="feed"><div class="section-title"><div><span class="eyebrow dark">সর্বশেষ আপডেট</span><h2>প্রকাশিত সংবাদ</h2></div><button id="refresh" class="button outline">রিফ্রেশ</button></div><div id="newsList" class="news-grid"><p>সংবাদ লোড হচ্ছে...</p></div></section>
+</main><footer><div class="container">© <span id="year"></span> সত্যের সন্ধানে সব সময় · পাঠানো সংবাদ যাচাই করে প্রকাশ করা হয়।</div></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
