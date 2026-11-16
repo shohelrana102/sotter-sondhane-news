@@ -1,1 +1,60 @@
-<!doctype html><html lang="bn"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>অ্যাডমিন লগইন</title><link rel="stylesheet" href="/style.css"></head><body><main class="wrap narrow"><section class="submit"><h1>অ্যাডমিন লগইন</h1><form method="post" action="/admin/login"><label>ইউজারনেম<input name="username" required></label><label>পাসওয়ার্ড<input type="password" name="password" required></label><button>লগইন</button></form><p><a href="/">মূল পোর্টালে ফিরুন</a></p></section></main></body></html>
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>অ্যাডমিন লগইন</title>
+<style>
+body{font-family:Arial;background:#f2f4f7;padding:20px}
+.box{max-width:400px;margin:50px auto;background:white;padding:25px;border-radius:12px}
+input,button{width:100%;padding:13px;margin:10px 0;box-sizing:border-box}
+button{background:#087b43;color:white;border:0;border-radius:6px;font-size:16px}
+#msg{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<div class="box">
+<h2>অ্যাডমিন লগইন</h2>
+<form id="loginForm">
+<input id="email" type="email" placeholder="আপনার ইমেইল" required>
+<input id="password" type="password" placeholder="পাসওয়ার্ড" required>
+<button type="submit">লগইন</button>
+</form>
+<p><a href="#" id="forgot">পাসওয়ার্ড ভুলে গেছেন?</a></p>
+<p id="msg"></p>
+<p><a href="/">মূল পোর্টালে ফিরুন</a></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const db=supabase.createClient(
+  window.PORTAL_CONFIG.SUPABASE_URL,
+  window.PORTAL_CONFIG.SUPABASE_ANON_KEY
+);
+const msg=document.getElementById("msg");
+
+document.getElementById("forgot").addEventListener("click",async function(e){
+  e.preventDefault();
+  const email=document.getElementById("email").value.trim();
+  if(!email){msg.textContent="আগে আপনার ইমেইল লিখুন।";return;}
+  msg.textContent="রিসেট লিংক পাঠানো হচ্ছে...";
+  const {error}=await db.auth.resetPasswordForEmail(email,{
+    redirectTo:location.origin+"/reset-password.html"
+  });
+  msg.textContent=error?"সমস্যা: "+error.message:"ইমেইলটি Supabase-এ নিবন্ধিত থাকলে রিসেট লিংক পাঠানো হয়েছে। ইনবক্স ও Spam ফোল্ডার দেখুন।";
+});
+
+document.getElementById("loginForm").addEventListener("submit",async function(e){
+  e.preventDefault();
+  msg.textContent="লগইন হচ্ছে...";
+  const {error}=await db.auth.signInWithPassword({
+    email:document.getElementById("email").value.trim(),
+    password:document.getElementById("password").value
+  });
+  if(error){msg.textContent="সমস্যা: "+error.message;return;}
+  msg.textContent="লগইন সফল হয়েছে।";
+});
+</script>
+</body>
+</html>
