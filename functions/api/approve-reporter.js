@@ -1,8 +1,5 @@
-
-const SUPABASE_URL = "https://juitlxjvqzmuzumlphos.supabase.co";
-
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://shotter-sondhane-news.pages.dev",
+  "Access-Control-Allow-Origin": "https://sotter-sondhane-news.pages.dev",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS"
 };
@@ -26,12 +23,13 @@ export async function onRequest({ request, env }) {
   }
 
   try {
-    const secretKey = env.SUPABASE_SECRET_KEY;
+    const SUPABASE_URL = env.SUPABASE_URL;
+    const secretKey = env.SUPABASE_SERVICE_ROLE_KEY;
     const anonKey = env.SUPABASE_ANON_KEY;
 
-    if (!secretKey || !anonKey) {
+    if (!SUPABASE_URL || !secretKey || !anonKey) {
       return reply({
-        error: "Supabase secret সেটাপ করা হয়নি।"
+        error: "Cloudflare-এর Supabase ভেরিয়েবল পাওয়া যায়নি।"
       }, 500);
     }
 
@@ -41,7 +39,7 @@ export async function onRequest({ request, env }) {
       return reply({ error: "অ্যাডমিন লগইন করুন।" }, 401);
     }
 
-    // অ্যাডমিনের লগইন যাচাই
+    // লগইন করা ব্যবহারকারী যাচাই
     const userResponse = await fetch(
       `${SUPABASE_URL}/auth/v1/user`,
       {
@@ -68,9 +66,13 @@ export async function onRequest({ request, env }) {
       }
     );
 
+    if (!adminCheck.ok) {
+      return reply({ error: "অ্যাডমিন যাচাই করা যায়নি।" }, 500);
+    }
+
     const admins = await adminCheck.json();
 
-    if (!adminCheck.ok || !admins.length) {
+    if (!admins.length) {
       return reply({
         error: "শুধু অ্যাডমিন এই কাজ করতে পারবেন।"
       }, 403);
@@ -79,11 +81,11 @@ export async function onRequest({ request, env }) {
     const body = await request.json();
     const requestId = body.request_id;
 
-    if (typeof requestId !== "string") {
+    if (typeof requestId !== "string" || !requestId.trim()) {
       return reply({ error: "আবেদনের ID সঠিক নয়।" }, 400);
     }
 
-    const headers = {
+    const adminHeaders = {
       apikey: secretKey,
       "Content-Type": "application/json"
     };
@@ -91,18 +93,12 @@ export async function onRequest({ request, env }) {
     // আবেদন খুঁজে বের করা
     const applicationResponse = await fetch(
       `${SUPABASE_URL}/rest/v1/registration_requests?id=eq.${encodeURIComponent(requestId)}&select=*`,
-      { headers }
+      { headers: adminHeaders }
     );
 
-    if (!secretKey || !anonKey) {
-  return reply({
-    error: "Supabase secret সেটাপ করা হয়নি।",
-    missing: {
-      SUPABASE_SECRET_KEY: !secretKey,
-      SUPABASE_ANON_KEY: !anonKey
+    if (!applicationResponse.ok) {
+      return reply({ error: "আবেদন খুঁজে পাওয়া যায়নি।" }, 500);
     }
-  }, 500);
-}
 
     const applications = await applicationResponse.json();
     const application = applications[0];
@@ -117,12 +113,12 @@ export async function onRequest({ request, env }) {
       }, 409);
     }
 
-    // ইমেইলে আমন্ত্রণ পাঠিয়ে অ্যাকাউন্ট তৈরি
+    // ইমেইলে আমন্ত্রণ পাঠানো
     const inviteResponse = await fetch(
       `${SUPABASE_URL}/auth/v1/invite`,
       {
         method: "POST",
-        headers,
+        headers: adminHeaders,
         body: JSON.stringify({
           email: application.email,
           data: {
@@ -151,7 +147,7 @@ export async function onRequest({ request, env }) {
       {
         method: "POST",
         headers: {
-          ...headers,
+          ...adminHeaders,
           Prefer: "return=minimal"
         },
         body: JSON.stringify({
@@ -161,28 +157,27 @@ export async function onRequest({ request, env }) {
     );
 
     if (!reporterResponse.ok) {
+      // ব্যর্থ হলে তৈরি করা অ্যাকাউন্ট মুছে ফেলার চেষ্টা
       await fetch(
         `${SUPABASE_URL}/auth/v1/admin/users/${invitedUser.id}`,
         {
           method: "DELETE",
-          headers: {
-            apikey: secretKey
-          }
+          headers: adminHeaders
         }
       );
 
       return reply({
-        error: "রিপোর্টার অনুমোদন করা যায়নি।"
+        error: "রিপোর্টার হিসেবে যুক্ত করা যায়নি।"
       }, 500);
     }
 
-    // আবেদন অনুমোদিত হিসেবে চিহ্নিত
+    // আবেদন অনুমোদিত করা
     const updateResponse = await fetch(
       `${SUPABASE_URL}/rest/v1/registration_requests?id=eq.${encodeURIComponent(requestId)}`,
       {
         method: "PATCH",
         headers: {
-          ...headers,
+          ...adminHeaders,
           Prefer: "return=minimal"
         },
         body: JSON.stringify({
