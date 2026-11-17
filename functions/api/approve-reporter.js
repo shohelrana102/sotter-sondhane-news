@@ -94,11 +94,15 @@ export async function onRequest({ request, env }) {
       { headers }
     );
 
-    if (!applicationResponse.ok) {
-      return reply({
-        error: "আবেদন যাচাই করা যায়নি।"
-      }, 500);
+    if (!secretKey || !anonKey) {
+  return reply({
+    error: "Supabase secret সেটাপ করা হয়নি।",
+    missing: {
+      SUPABASE_SECRET_KEY: !secretKey,
+      SUPABASE_ANON_KEY: !anonKey
     }
+  }, 500);
+}
 
     const applications = await applicationResponse.json();
     const application = applications[0];
