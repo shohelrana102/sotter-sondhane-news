@@ -25,7 +25,6 @@ function say(el, text, kind = "") {
   }
 }
 
-
 // অ্যাডমিন যাচাই
 async function enter() {
   const { data, error } = await db.auth.getUser();
@@ -57,7 +56,6 @@ async function enter() {
   loadAdmin();
 }
 
-
 // লগইন অবস্থা
 async function init() {
   if (!db) {
@@ -74,7 +72,6 @@ async function init() {
 
   if (data.session) await enter();
 }
-
 
 // লগইন
 document.querySelector("#loginForm").addEventListener("submit", async (e) => {
@@ -99,12 +96,10 @@ document.querySelector("#loginForm").addEventListener("submit", async (e) => {
 
   } catch (error) {
     say(loginMsg, "লগইন সমস্যা: " + error.message, "error");
-
   } finally {
     if (btn) btn.disabled = false;
   }
 });
-
 
 // লগআউট
 document.querySelector("#logout").addEventListener("click", async () => {
@@ -112,8 +107,7 @@ document.querySelector("#logout").addEventListener("click", async () => {
   location.reload();
 });
 
-
-// আবেদন দেখানোর বিভাগ
+// রিপোর্টার আবেদন বিভাগ
 function createRequestSection() {
   if (document.querySelector("#requestSection")) return;
 
@@ -135,10 +129,8 @@ function createRequestSection() {
   list.textContent = "আবেদন লোড হচ্ছে...";
 
   section.append(heading, refresh, list);
-
   dash.insertBefore(section, dash.firstChild);
 }
-
 
 // আবেদন লোড
 async function loadRequests() {
@@ -186,7 +178,7 @@ async function loadRequests() {
 
     const info = document.createElement("p");
     info.textContent =
-      "অনুমোদনের পর Supabase-এ অ্যাকাউন্ট তৈরি করতে হবে।";
+      "অনুমোদন করলে রিপোর্টার অ্যাকাউন্ট তৈরি হবে এবং ইমেইলে আমন্ত্রণ যাবে।";
 
     const actions = document.createElement("div");
     actions.className = "actions";
@@ -197,10 +189,16 @@ async function loadRequests() {
 
     approve.onclick = async () => {
       if (!confirm(
-        "এই আবেদন অনুমোদন করবেন? এরপর Supabase-এ অ্যাকাউন্ট তৈরি করতে হবে।"
+        "এই আবেদন অনুমোদন করবেন? আবেদনকারীর ইমেইলে অ্যাকাউন্ট তৈরির আমন্ত্রণ যাবে।"
       )) return;
 
-      await changeRequestStatus(request.id, "approved");
+      approve.disabled = true;
+      approve.textContent = "অনুমোদন হচ্ছে...";
+
+      await approveReporter(request.id);
+
+      approve.disabled = false;
+      approve.textContent = "অনুমোদন";
     };
 
     const reject = document.createElement("button");
@@ -210,7 +208,9 @@ async function loadRequests() {
     reject.onclick = async () => {
       if (!confirm("এই আবেদন বাতিল করবেন?")) return;
 
+      reject.disabled = true;
       await changeRequestStatus(request.id, "rejected");
+      reject.disabled = false;
     };
 
     actions.append(approve, reject);
@@ -219,8 +219,49 @@ async function loadRequests() {
   }
 }
 
+// নতুন API দিয়ে রিপোর্টার অনুমোদন
+async function approveReporter(requestId) {
+  try {
+    const { data, error } = await db.auth.getSession();
 
-// আবেদনের অবস্থা পরিবর্তন
+    if (error) throw error;
+
+    const session = data.session;
+
+    if (!session?.access_token) {
+      throw new Error("অ্যাডমিন লগইন করুন।");
+    }
+
+    const response = await fetch("/api/approve-reporter", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + session.access_token
+      },
+      body: JSON.stringify({
+        request_id: requestId
+      })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "অনুমোদন করা যায়নি।");
+    }
+
+    alert(
+      result.message ||
+      "রিপোর্টার অ্যাকাউন্ট তৈরি হয়েছে। ইমেইল পাঠানো হয়েছে।"
+    );
+
+    await loadRequests();
+
+  } catch (error) {
+    alert("অনুমোদন সমস্যা: " + error.message);
+  }
+}
+
+// আবেদন বাতিল
 async function changeRequestStatus(id, status) {
   const { error } = await db
     .from("registration_requests")
@@ -232,15 +273,9 @@ async function changeRequestStatus(id, status) {
     return;
   }
 
-  alert(
-    status === "approved"
-      ? "আবেদন অনুমোদিত হয়েছে। এবার Supabase Authentication থেকে অ্যাকাউন্ট তৈরি করতে হবে।"
-      : "আবেদন বাতিল করা হয়েছে।"
-  );
-
+  alert("আবেদন বাতিল করা হয়েছে।");
   loadRequests();
 }
-
 
 // নিউজের ট্যাব
 document.querySelectorAll(".tab").forEach((b) => {
@@ -255,10 +290,11 @@ document.querySelectorAll(".tab").forEach((b) => {
   });
 });
 
-
 // নিউজ লোড
 async function loadAdmin() {
   const box = document.querySelector("#adminNews");
+  if (!box) return;
+
   box.textContent = "নিউজ লোড হচ্ছে...";
 
   const { data, error } = await db
@@ -285,6 +321,7 @@ async function loadAdmin() {
 
     const h = document.createElement("h3");
     h.textContent = n.title || "শিরোনাম নেই";
+
     card.appendChild(h);
 
     if (n.image_url) {
@@ -332,7 +369,10 @@ async function loadAdmin() {
     del.onclick = async () => {
       if (!confirm("এই নিউজ স্থায়ীভাবে মুছে ফেলবেন?")) return;
 
-      const { error } = await db.from("news").delete().eq("id", n.id);
+      const { error } = await db
+        .from("news")
+        .delete()
+        .eq("id", n.id);
 
       if (error) alert(error.message);
       else loadAdmin();
@@ -344,7 +384,6 @@ async function loadAdmin() {
   }
 }
 
-
 // নিউজের অবস্থা পরিবর্তন
 async function updateStatus(id, status) {
   const { error } = await db
@@ -352,8 +391,16 @@ async function updateStatus(id, status) {
     .update({ status })
     .eq("id", id);
 
-  if (error) alert(error.message);
-  else loadAdmin();
+  if (error) {
+    alert("পরিবর্তন করা যায়নি: " + error.message);
+  } else {
+    alert(
+      status === "approved"
+        ? "নিউজ প্রকাশ করা হয়েছে।"
+        : "নিউজ বাতিল করা হয়েছে।"
+    );
+    loadAdmin();
+  }
 }
 
 init();
