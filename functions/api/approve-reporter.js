@@ -23,10 +23,10 @@ export async function onRequest({ request, env }) {
   }
 
   try {
-    const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY;
+    const secretKey = env.SUPABASE_SECRET_KEY;
     const anonKey = env.SUPABASE_ANON_KEY;
 
-    if (!serviceKey || !anonKey) {
+    if (!secretKey || !anonKey) {
       return reply({ error: "Supabase secret সেট করা হয়নি।" }, 500);
     }
 
@@ -49,14 +49,13 @@ export async function onRequest({ request, env }) {
 
     const user = await userResponse.json();
 
+    const adminHeaders = {
+      apikey: secretKey
+    };
+
     const adminCheck = await fetch(
       `${SUPABASE_URL}/rest/v1/portal_admins?user_id=eq.${encodeURIComponent(user.id)}&select=user_id`,
-      {
-        headers: {
-          apikey: serviceKey,
-          Authorization: `Bearer ${serviceKey}`
-        }
-      }
+      { headers: adminHeaders }
     );
 
     const admins = await adminCheck.json();
@@ -73,8 +72,7 @@ export async function onRequest({ request, env }) {
     }
 
     const headers = {
-      apikey: serviceKey,
-      Authorization: `Bearer ${serviceKey}`,
+      apikey: secretKey,
       "Content-Type": "application/json"
     };
 
@@ -82,6 +80,10 @@ export async function onRequest({ request, env }) {
       `${SUPABASE_URL}/rest/v1/registration_requests?id=eq.${encodeURIComponent(requestId)}&select=*`,
       { headers }
     );
+
+    if (!applicationResponse.ok) {
+      return reply({ error: "আবেদন যাচাই করা যায়নি।" }, 500);
+    }
 
     const applications = await applicationResponse.json();
     const application = applications[0];
@@ -122,7 +124,10 @@ export async function onRequest({ request, env }) {
       `${SUPABASE_URL}/rest/v1/portal_reporters`,
       {
         method: "POST",
-        headers: { ...headers, Prefer: "return=minimal" },
+        headers: {
+          ...headers,
+          Prefer: "return=minimal"
+        },
         body: JSON.stringify({ user_id: invitedUser.id })
       }
     );
@@ -130,8 +135,12 @@ export async function onRequest({ request, env }) {
     if (!reporterResponse.ok) {
       await fetch(
         `${SUPABASE_URL}/auth/v1/admin/users/${invitedUser.id}`,
-        { method: "DELETE", headers }
+        {
+          method: "DELETE",
+          headers
+        }
       );
+
       return reply({ error: "রিপোর্টার অনুমোদন করা যায়নি।" }, 500);
     }
 
@@ -139,7 +148,10 @@ export async function onRequest({ request, env }) {
       `${SUPABASE_URL}/rest/v1/registration_requests?id=eq.${encodeURIComponent(requestId)}`,
       {
         method: "PATCH",
-        headers: { ...headers, Prefer: "return=minimal" },
+        headers: {
+          ...headers,
+          Prefer: "return=minimal"
+        },
         body: JSON.stringify({ status: "approved" })
       }
     );
@@ -161,4 +173,3 @@ export async function onRequest({ request, env }) {
     }, 500);
   }
 }
-
