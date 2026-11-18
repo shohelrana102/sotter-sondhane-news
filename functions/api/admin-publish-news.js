@@ -42,11 +42,28 @@ export async function onRequest({ request, env }) {
     const author = typeof input.author === "string" ? input.author.trim() : "";
     const phone = typeof input.phone === "string" ? input.phone.trim().slice(0, 30) : "";
     const image_url = typeof input.image_url === "string" ? input.image_url.trim().slice(0, 500) : "";
+    const video_url = typeof input.video_url === "string" ? input.video_url.trim().slice(0, 500) : "";
 
     if (title.length < 5 || title.length > 180 || body.length < 20 || body.length > 12000 || author.length < 2 || author.length > 80) {
       return reply({ error: "শিরোনাম ৫–১৮০ অক্ষর, বিস্তারিত ২০–১২০০০ অক্ষর এবং প্রতিবেদকের নাম ২–৮০ অক্ষরের মধ্যে দিন।" }, 400);
     }
     if (image_url && !/^https:\/\//i.test(image_url)) return reply({ error: "ছবির লিংক https:// দিয়ে শুরু হতে হবে।" }, 400);
+
+    if (video_url) {
+      let videoId = "";
+      try {
+        const video = new URL(video_url);
+        const host = video.hostname.replace(/^www\\./, "").toLowerCase();
+        if (host === "youtu.be") videoId = video.pathname.split("/").filter(Boolean)[0] || "";
+        else if (["youtube.com", "m.youtube.com", "youtube-nocookie.com"].includes(host)) {
+          if (video.pathname === "/watch") videoId = video.searchParams.get("v") || "";
+          else if (/^\\/(embed|shorts)\\//.test(video.pathname)) videoId = video.pathname.split("/")[2] || "";
+        }
+      } catch {}
+      if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+        return reply({ error: "সঠিক YouTube ভিডিও লিংক দিন।" }, 400);
+      }
+    }
 
     const insertRes = await fetch(`${url}/rest/v1/news`, {
       method: "POST",
@@ -56,7 +73,7 @@ export async function onRequest({ request, env }) {
         "Content-Type": "application/json",
         Prefer: "return=representation"
       },
-      body: JSON.stringify({ title, body, author, phone, image_url, status: "approved" })
+      body: JSON.stringify({ title, body, author, phone, image_url, video_url, status: "approved" })
     });
     if (!insertRes.ok) {
       const detail = await insertRes.text();
