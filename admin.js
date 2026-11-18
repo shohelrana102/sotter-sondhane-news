@@ -52,6 +52,7 @@ async function enter() {
   document.querySelector("#who").textContent = data.user.email;
 
   createRequestSection();
+  setupAdminPublishForm();
   loadRequests();
   loadAdmin();
 }
@@ -404,3 +405,50 @@ async function updateStatus(id, status) {
 }
 
 init();
+
+
+// অ্যাডমিনের নিউজ সরাসরি প্রকাশ
+function setupAdminPublishForm() {
+  const form = document.querySelector("#adminNewsForm");
+  if (!form || form.dataset.ready) return;
+  form.dataset.ready = "1";
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = document.querySelector("#adminPublishMsg");
+    const btn = form.querySelector('button[type="submit"]');
+    const values = Object.fromEntries(new FormData(form));
+    btn.disabled = true;
+    say(msg, "নিউজ প্রকাশ হচ্ছে...");
+
+    try {
+      const { data, error } = await db.auth.getSession();
+      if (error) throw error;
+      const token = data.session?.access_token;
+      if (!token) throw new Error("আবার অ্যাডমিন লগইন করুন।");
+
+      const response = await fetch("/api/admin-publish-news", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify(values)
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "নিউজ প্রকাশ করা যায়নি।");
+
+      say(msg, result.message || "নিউজ প্রকাশিত হয়েছে।", "success");
+      form.reset();
+      currentStatus = "approved";
+      document.querySelectorAll(".tab").forEach((x) => {
+        x.classList.toggle("active", x.dataset.status === "approved");
+      });
+      await loadAdmin();
+    } catch (error) {
+      say(msg, "প্রকাশের সমস্যা: " + error.message, "error");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+}
