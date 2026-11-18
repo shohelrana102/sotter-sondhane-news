@@ -1,3 +1,17 @@
+function getYouTubeVideoId(value) {
+  try {
+    const u = new URL(value);
+    const host = u.hostname.replace(/^www\\./, "").toLowerCase();
+    let id = "";
+    if (host === "youtu.be") id = u.pathname.split("/").filter(Boolean)[0] || "";
+    else if (["youtube.com", "m.youtube.com", "youtube-nocookie.com"].includes(host)) {
+      if (u.pathname === "/watch") id = u.searchParams.get("v") || "";
+      else if (/^\\/(embed|shorts)\\//.test(u.pathname)) id = u.pathname.split("/")[2] || "";
+    }
+    return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : "";
+  } catch { return ""; }
+}
+
 
 const cfg = window.PORTAL_CONFIG || {};
 
@@ -131,7 +145,7 @@ async function loadNews() {
 
   const { data, error } = await db
     .from("news")
-    .select("id,title,body,author,image_url,created_at")
+    .select("id,title,body,author,image_url,video_url,created_at")
     .eq("status", "approved")
     .order("created_at", { ascending: false })
     .limit(60);
@@ -168,6 +182,20 @@ async function loadNews() {
         im.style.display = "none";
       };
       card.appendChild(im);
+    }
+
+    if (n.video_url) {
+      const videoId = getYouTubeVideoId(n.video_url);
+      if (videoId) {
+        const frame = document.createElement("iframe");
+        frame.src = "https://www.youtube-nocookie.com/embed/" + videoId;
+        frame.title = n.title || "সংবাদের ভিডিও";
+        frame.loading = "lazy";
+        frame.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+        frame.allowFullscreen = true;
+        frame.style.cssText = "display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:10px;margin:12px 0;";
+        card.appendChild(frame);
+      }
     }
 
     const p = document.createElement("p");
