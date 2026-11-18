@@ -146,6 +146,24 @@
         </button>
       </div>
 
+      <section class="panel">
+        <h2>✍️ নতুন নিউজ প্রকাশ করুন</h2>
+        <form id="adminNewsForm">
+          <label for="adminTitle">নিউজের শিরোনাম</label>
+          <input id="adminTitle" name="title" minlength="5" maxlength="180" required>
+          <label for="adminAuthor">প্রতিবেদকের নাম</label>
+          <input id="adminAuthor" name="author" minlength="2" maxlength="80" required>
+          <label for="adminPhone">মোবাইল নম্বর (ঐচ্ছিক)</label>
+          <input id="adminPhone" name="phone" maxlength="30">
+          <label for="adminImage">ছবির লিংক (ঐচ্ছিক)</label>
+          <input id="adminImage" name="image_url" type="url" placeholder="https://...">
+          <label for="adminBody">নিউজের বিস্তারিত</label>
+          <textarea id="adminBody" name="body" minlength="20" maxlength="12000" required rows="8" style="display:block;width:100%;box-sizing:border-box;padding:13px;margin:12px 0;border:1px solid #ccc;border-radius:7px;font-size:16px;"></textarea>
+          <button class="button" type="submit">সরাসরি প্রকাশ করুন</button>
+          <p id="adminPublishMsg" aria-live="polite"></p>
+        </form>
+      </section>
+
       <div class="panel">
         <div class="tabs">
           <button class="button tab active" data-status="pending" type="button">
