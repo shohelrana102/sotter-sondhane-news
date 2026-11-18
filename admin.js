@@ -202,6 +202,12 @@ async function loadReporters() {
         "\\nমোবাইল: " + (r.phone || "নেই") +
         "\\nইমেইল: " + (r.email || "নেই") +
         "\\nঠিকানা: " + (r.address || "নেই");
+      const portalLink = document.createElement("a");
+      portalLink.href = "reporter-dashboard.html";
+      portalLink.textContent = "সাংবাদিক পোর্টাল";
+      portalLink.className = "button";
+      portalLink.style.cssText = "display:inline-block;text-decoration:none;margin:5px;padding:10px 14px;background:#176b3a;color:white;border-radius:7px;";
+
       const remove = document.createElement("button");
       remove.className = "button danger"; remove.textContent = "সাংবাদিক পদ বাতিল";
       remove.onclick = async () => {
@@ -220,7 +226,7 @@ async function loadReporters() {
           loadReporters();
         } catch (e) { alert(e.message); remove.disabled = false; }
       };
-      card.append(h, detail, remove);
+      card.append(h, detail, portalLink, remove);
       box.appendChild(card);
     }
   } catch (e) { box.textContent = "সমস্যা: " + e.message; }
