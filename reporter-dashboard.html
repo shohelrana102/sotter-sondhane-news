@@ -16,7 +16,8 @@ button:disabled{opacity:.6}
 .profile{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .profile img{width:116px;height:116px;border-radius:50%;object-fit:cover;border:4px solid #e4eee7}
 .muted{color:#66766c}.news-item{border:1px solid #dce5de;border-radius:10px;padding:14px;margin:12px 0}
-.status{font-weight:bold;color:#176b3a}\n.copy-warning{color:#c40000;font-weight:bold;background:#fff0f0;border:1px solid #efb4b4;padding:10px;border-radius:8px}
+.status{font-weight:bold;color:#176b3a}
+.copy-warning{color:#c40000;font-weight:bold;background:#fff0f0;border:1px solid #efb4b4;padding:10px;border-radius:8px}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -34,12 +35,13 @@ button:disabled{opacity:.6}
 <section id="portal" hidden>
 <section class="panel">
 <div class="profile"><img id="profilePhoto" alt="সাংবাদিকের ছবি"><div><h2 id="profileName"></h2><p id="profilePost"></p><p id="profileContact" class="muted"></p></div></div>
-<p id="profileAddress"></p><button id="logout" type="button">লগআউট</button>
+<p id="profileAddress"></p><label>নতুন প্রোফাইল ছবি<input id="newProfilePhoto" type="file" accept="image/jpeg,image/png,image/webp"></label><button id="saveProfilePhoto" type="button">প্রোফাইল ছবি পরিবর্তন করুন</button><p id="profileMessage" role="status"></p><button id="logout" type="button">লগআউট</button>
 </section>
 <section class="panel">
 <h2>নতুন সংবাদ জমা দিন</h2>
 <p class="muted">আপনার সংবাদ অ্যাডমিন অনুমোদনের পর মূল ওয়েবসাইটে প্রকাশিত হবে।</p>
-<form id="newsForm">\n<p class="copy-warning">সতর্কতা: অন্য জায়গা থেকে কপি-পেস্ট করা যাবে না। সংবাদ নিজের ভাষায় লিখুন। কপি বা পুরোনো সংবাদের সঙ্গে বেশি মিল পেলে জমা বাতিল হবে।</p>
+<form id="newsForm">
+<p class="copy-warning">সতর্কতা: অন্য জায়গা থেকে কপি-পেস্ট করা যাবে না। সংবাদ নিজের ভাষায় লিখুন। কপি বা পুরোনো সংবাদের সঙ্গে বেশি মিল পেলে জমা বাতিল হবে।</p>
 <label>সংবাদের শিরোনাম<input name="title" required minlength="5" maxlength="180"></label>
 <label>সংবাদের ছবি লিংক (ঐচ্ছিক)<input name="image_url" type="url" placeholder="https://..."></label>
 <label>YouTube ভিডিও লিংক (ঐচ্ছিক)<input name="video_url" type="url" placeholder="https://..."></label>
@@ -57,7 +59,9 @@ button:disabled{opacity:.6}
 const cfg=window.PORTAL_CONFIG||{};
 const db=window.supabase?.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
 const loginPanel=document.querySelector("#loginPanel"),portal=document.querySelector("#portal");
-const loginMessage=document.querySelector("#loginMessage"),newsMessage=document.querySelector("#newsMessage");\nconst newsForm=document.querySelector("#newsForm");\n["title","body"].forEach(name=>{const field=newsForm.elements[name];field.addEventListener("paste",e=>{e.preventDefault();newsMessage.textContent="কপি নিউজ! এখানে কপি-পেস্ট করা যাবে না। নিজের ভাষায় লিখুন।";newsMessage.style.color="#c40000";});field.addEventListener("drop",e=>{e.preventDefault();newsMessage.textContent="কপি করা লেখা টেনে এনে বসানো যাবে না।";newsMessage.style.color="#c40000";});});
+const loginMessage=document.querySelector("#loginMessage"),newsMessage=document.querySelector("#newsMessage");
+const newsForm=document.querySelector("#newsForm");
+["title","body"].forEach(name=>{const field=newsForm.elements[name];field.addEventListener("paste",e=>{e.preventDefault();newsMessage.textContent="কপি নিউজ! এখানে কপি-পেস্ট করা যাবে না। নিজের ভাষায় লিখুন।";newsMessage.style.color="#c40000";});field.addEventListener("drop",e=>{e.preventDefault();newsMessage.textContent="কপি করা লেখা টেনে এনে বসানো যাবে না।";newsMessage.style.color="#c40000";});});
 async function api(method,body){
  const {data}=await db.auth.getSession();
  const r=await fetch("/api/reporter-portal",{method,headers:{"Content-Type":"application/json","Authorization":"Bearer "+data.session.access_token},body:body?JSON.stringify(body):undefined});
@@ -85,6 +89,20 @@ document.querySelector("#loginForm").addEventListener("submit",async e=>{
  e.preventDefault();const b=e.currentTarget.querySelector("button");b.disabled=true;loginMessage.textContent="লগইন হচ্ছে...";
  try{const d=Object.fromEntries(new FormData(e.currentTarget));const {error}=await db.auth.signInWithPassword({email:d.email,password:d.password});if(error)throw error;await loadPortal();}
  catch(err){loginMessage.textContent=err.message;}finally{b.disabled=false;}
+});
+document.querySelector("#saveProfilePhoto").addEventListener("click",async()=>{
+ const file=document.querySelector("#newProfilePhoto").files[0],msg=document.querySelector("#profileMessage"),btn=document.querySelector("#saveProfilePhoto");
+ if(!file){msg.textContent="আগে একটি ছবি নির্বাচন করুন।";return;}
+ if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>3*1024*1024){msg.textContent="JPG, PNG বা WEBP ছবি দিন; সর্বোচ্চ ৩ MB।";return;}
+ btn.disabled=true;msg.textContent="ছবি আপলোড হচ্ছে...";
+ try{
+  const ext={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"}[file.type],path="reporters/"+crypto.randomUUID()+"."+ext;
+  const {data,error}=await db.storage.from("news-images").upload(path,file,{upsert:false,contentType:file.type});
+  if(error)throw error;
+  const photo_url=db.storage.from("news-images").getPublicUrl(data.path).data.publicUrl;
+  await api("POST",{action:"update_profile",photo_url});
+  document.querySelector("#profilePhoto").src=photo_url;msg.textContent="প্রোফাইল ছবি পরিবর্তন হয়েছে।";
+ }catch(e){msg.textContent="ছবি পরিবর্তন হয়নি: "+e.message;}finally{btn.disabled=false;}
 });
 document.querySelector("#logout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});
 document.querySelector("#newsForm").addEventListener("submit",async e=>{
