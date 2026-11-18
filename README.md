@@ -1,2 +1,2 @@
 # sotter-sondhane-news
-সত্যের সন্ধানে সব সময় - জনসাধারণের সংবাদ পোর্টাল.Website deployment update.
+সত্যের সন্ধানে সব সময় - জনসাধারণের সংবাদ পোর্টাল.Website deployment update.Deployment refresh
