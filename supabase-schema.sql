@@ -1,3 +1,6 @@
+-- ভিডিও লিংক রাখার জন্য (পুরোনো ডাটাবেজেও নিরাপদে চালানো যাবে)
+alter table public.news add column if not exists video_url text not null default '';
+
 -- Supabase Dashboard → SQL Editor → New query → paste and Run.
 -- This schema creates public news submissions, moderation roles, RLS and duplicate checking.
 create extension if not exists pg_trgm with schema extensions;
