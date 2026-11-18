@@ -53,11 +53,11 @@ export async function onRequest({ request, env }) {
       let videoId = "";
       try {
         const video = new URL(video_url);
-        const host = video.hostname.replace(/^www\\./, "").toLowerCase();
+        const host = video.hostname.replace(/^www\./, "").toLowerCase();
         if (host === "youtu.be") videoId = video.pathname.split("/").filter(Boolean)[0] || "";
         else if (["youtube.com", "m.youtube.com", "youtube-nocookie.com"].includes(host)) {
           if (video.pathname === "/watch") videoId = video.searchParams.get("v") || "";
-          else if (/^\\/(embed|shorts)\\//.test(video.pathname)) videoId = video.pathname.split("/")[2] || "";
+          else if (/^\/(embed|shorts)\//.test(video.pathname)) videoId = video.pathname.split("/")[2] || "";
         }
       } catch {}
       if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
