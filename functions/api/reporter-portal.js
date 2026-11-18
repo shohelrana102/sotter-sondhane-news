@@ -19,6 +19,13 @@ export async function onRequest({request,env}){
    return reply({ok:true,profile,news:await nr.json()});
   }
   const input=await request.json();
+  if(input.action==="update_profile"){
+   const photo_url=typeof input.photo_url==="string"?input.photo_url.trim():"";
+   if(!/^https:\/\//i.test(photo_url))return reply({error:"সঠিক ছবির লিংক দিন।"},400);
+   const update=await fetch(url+"/rest/v1/portal_reporters?user_id=eq."+encodeURIComponent(user.id),{method:"PATCH",headers:{...headers,Prefer:"return=minimal"},body:JSON.stringify({photo_url})});
+   if(!update.ok)return reply({error:"প্রোফাইল ছবি পরিবর্তন করা যায়নি।"},500);
+   return reply({ok:true,message:"প্রোফাইল ছবি পরিবর্তন হয়েছে।"});
+  }
   const title=typeof input.title==="string"?input.title.trim():"";
   const body=typeof input.body==="string"?input.body.trim():"";
   const image_url=typeof input.image_url==="string"?input.image_url.trim():"";
