@@ -1,12 +1,12 @@
 function getYouTubeVideoId(value) {
   try {
     const u = new URL(value);
-    const host = u.hostname.replace(/^www\\./, "").toLowerCase();
+    const host = u.hostname.replace(/^www\./, "").toLowerCase();
     let id = "";
     if (host === "youtu.be") id = u.pathname.split("/").filter(Boolean)[0] || "";
     else if (["youtube.com", "m.youtube.com", "youtube-nocookie.com"].includes(host)) {
       if (u.pathname === "/watch") id = u.searchParams.get("v") || "";
-      else if (/^\\/(embed|shorts)\\//.test(u.pathname)) id = u.pathname.split("/")[2] || "";
+      else if (/^\/(embed|shorts)\//.test(u.pathname)) id = u.pathname.split("/")[2] || "";
     }
     return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : "";
   } catch { return ""; }
