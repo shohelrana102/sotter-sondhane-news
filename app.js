@@ -145,7 +145,7 @@ async function loadNews() {
 
   const { data, error } = await db
     .from("news")
-    .select("id,title,body,author,image_url,video_url,created_at")
+    .select("id,title,body,author,image_url,video_url,reporter_id,created_at")
     .eq("status", "approved")
     .order("created_at", { ascending: false })
     .limit(60);
@@ -200,10 +200,11 @@ async function loadNews() {
 
     const meta = document.createElement("small");
     meta.className = "news-byline";
-    meta.textContent =
-      "রিপোর্ট: " + (n.author || "নাম উল্লেখ নেই") +
-      " · " +
-      new Date(n.created_at).toLocaleString("bn-BD");
+    const reporterLink = document.createElement("a");
+    reporterLink.href = n.reporter_id ? "reporter-profile.html?id=" + encodeURIComponent(n.reporter_id) : "#";
+    reporterLink.textContent = "সাংবাদিক: " + (n.author || "নাম উল্লেখ নেই");
+    reporterLink.style.cssText = "display:block;color:#176b43;font-weight:bold;margin:8px 0;text-decoration:underline;";
+    meta.textContent = new Date(n.created_at).toLocaleString("bn-BD");
 
     const p = document.createElement("p");
     const body = String(n.body || "");
@@ -212,7 +213,7 @@ async function loadNews() {
       : body;
 
     // শিরোনাম → ছবি/ভিডিও → রিপোর্টারের নাম → সংবাদ বিবরণ
-    card.append(meta, p);
+    card.append(reporterLink, meta, p);
 
     addShareButtons(card, n);
     list.appendChild(card);
