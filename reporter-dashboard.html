@@ -30,8 +30,9 @@ button:disabled{opacity:.6}
 <label>ইমেইল<input name="email" type="email" required autocomplete="username"></label>
 <label>পাসওয়ার্ড<input name="password" type="password" required autocomplete="current-password"></label>
 <button type="submit">লগইন করুন</button>
-</form><p id="loginMessage" role="status"></p>
+</form><p><a href="#" id="forgotPassword">পাসওয়ার্ড ভুলে গেছেন? ফরগেট পাসওয়ার্ড</a></p><p id="loginMessage" role="status"></p>
 </section>
+<section id="resetPanel" class="panel" hidden><h2>নতুন পাসওয়ার্ড সেট করুন</h2><form id="resetForm"><label>নতুন পাসওয়ার্ড<input name="password" type="password" minlength="8" required autocomplete="new-password"></label><button type="submit">পাসওয়ার্ড পরিবর্তন করুন</button></form><p id="resetMessage" role="status"></p></section>
 <section id="portal" hidden>
 <section class="panel">
 <div class="profile"><img id="profilePhoto" alt="সাংবাদিকের ছবি"><div><h2 id="profileName"></h2><p id="profilePost"></p><p id="profileContact" class="muted"></p></div></div>
@@ -60,6 +61,9 @@ const cfg=window.PORTAL_CONFIG||{};
 const db=window.supabase?.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
 const loginPanel=document.querySelector("#loginPanel"),portal=document.querySelector("#portal");
 const loginMessage=document.querySelector("#loginMessage"),newsMessage=document.querySelector("#newsMessage");
+document.querySelector("#forgotPassword").addEventListener("click",async e=>{e.preventDefault();const email=document.querySelector("#loginForm [name=email]").value.trim();if(!email){loginMessage.textContent="আগে আপনার সাংবাদিক অ্যাকাউন্টের ইমেইল লিখুন।";return;}loginMessage.textContent="পাসওয়ার্ড রিসেটের ইমেইল পাঠানো হচ্ছে...";const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+"/reporter-dashboard.html"});loginMessage.textContent=error?error.message:"আপনার ইমেইলে পাসওয়ার্ড পরিবর্তনের লিংক পাঠানো হয়েছে। ইমেইল খুলে লিংকে চাপ দিন।";});
+db?.auth.onAuthStateChange((event)=>{if(event==="PASSWORD_RECOVERY"){loginPanel.hidden=true;portal.hidden=true;document.querySelector("#resetPanel").hidden=false;}});
+document.querySelector("#resetForm").addEventListener("submit",async e=>{e.preventDefault();const msg=document.querySelector("#resetMessage"),btn=e.currentTarget.querySelector("button");btn.disabled=true;msg.textContent="পাসওয়ার্ড পরিবর্তন হচ্ছে...";const password=new FormData(e.currentTarget).get("password");const {error}=await db.auth.updateUser({password});if(error){msg.textContent="পরিবর্তন হয়নি: "+error.message;}else{msg.textContent="পাসওয়ার্ড পরিবর্তন হয়েছে। এখন লগইন করুন।";await db.auth.signOut();document.querySelector("#resetPanel").hidden=true;loginPanel.hidden=false;}btn.disabled=false;});
 const newsForm=document.querySelector("#newsForm");
 ["title","body"].forEach(name=>{const field=newsForm.elements[name];field.addEventListener("paste",e=>{e.preventDefault();newsMessage.textContent="কপি নিউজ! এখানে কপি-পেস্ট করা যাবে না। নিজের ভাষায় লিখুন।";newsMessage.style.color="#c40000";});field.addEventListener("drop",e=>{e.preventDefault();newsMessage.textContent="কপি করা লেখা টেনে এনে বসানো যাবে না।";newsMessage.style.color="#c40000";});});
 async function api(method,body){
