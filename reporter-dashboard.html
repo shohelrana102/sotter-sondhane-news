@@ -16,7 +16,7 @@ button:disabled{opacity:.6}
 .profile{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .profile img{width:116px;height:116px;border-radius:50%;object-fit:cover;border:4px solid #e4eee7}
 .muted{color:#66766c}.news-item{border:1px solid #dce5de;border-radius:10px;padding:14px;margin:12px 0}
-.status{font-weight:bold;color:#176b3a}
+.status{font-weight:bold;color:#176b3a}\n.copy-warning{color:#c40000;font-weight:bold;background:#fff0f0;border:1px solid #efb4b4;padding:10px;border-radius:8px}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -39,7 +39,7 @@ button:disabled{opacity:.6}
 <section class="panel">
 <h2>নতুন সংবাদ জমা দিন</h2>
 <p class="muted">আপনার সংবাদ অ্যাডমিন অনুমোদনের পর মূল ওয়েবসাইটে প্রকাশিত হবে।</p>
-<form id="newsForm">
+<form id="newsForm">\n<p class="copy-warning">সতর্কতা: অন্য জায়গা থেকে কপি-পেস্ট করা যাবে না। সংবাদ নিজের ভাষায় লিখুন। কপি বা পুরোনো সংবাদের সঙ্গে বেশি মিল পেলে জমা বাতিল হবে।</p>
 <label>সংবাদের শিরোনাম<input name="title" required minlength="5" maxlength="180"></label>
 <label>সংবাদের ছবি লিংক (ঐচ্ছিক)<input name="image_url" type="url" placeholder="https://..."></label>
 <label>YouTube ভিডিও লিংক (ঐচ্ছিক)<input name="video_url" type="url" placeholder="https://..."></label>
@@ -57,7 +57,7 @@ button:disabled{opacity:.6}
 const cfg=window.PORTAL_CONFIG||{};
 const db=window.supabase?.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
 const loginPanel=document.querySelector("#loginPanel"),portal=document.querySelector("#portal");
-const loginMessage=document.querySelector("#loginMessage"),newsMessage=document.querySelector("#newsMessage");
+const loginMessage=document.querySelector("#loginMessage"),newsMessage=document.querySelector("#newsMessage");\nconst newsForm=document.querySelector("#newsForm");\n["title","body"].forEach(name=>{const field=newsForm.elements[name];field.addEventListener("paste",e=>{e.preventDefault();newsMessage.textContent="কপি নিউজ! এখানে কপি-পেস্ট করা যাবে না। নিজের ভাষায় লিখুন।";newsMessage.style.color="#c40000";});field.addEventListener("drop",e=>{e.preventDefault();newsMessage.textContent="কপি করা লেখা টেনে এনে বসানো যাবে না।";newsMessage.style.color="#c40000";});});
 async function api(method,body){
  const {data}=await db.auth.getSession();
  const r=await fetch("/api/reporter-portal",{method,headers:{"Content-Type":"application/json","Authorization":"Bearer "+data.session.access_token},body:body?JSON.stringify(body):undefined});
@@ -88,9 +88,9 @@ document.querySelector("#loginForm").addEventListener("submit",async e=>{
 });
 document.querySelector("#logout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});
 document.querySelector("#newsForm").addEventListener("submit",async e=>{
- e.preventDefault();const b=e.currentTarget.querySelector("button");b.disabled=true;newsMessage.textContent="সংবাদ জমা হচ্ছে...";
+ e.preventDefault();const b=e.currentTarget.querySelector("button");b.disabled=true;newsMessage.style.color="";newsMessage.textContent="সংবাদ জমা হচ্ছে...";
  try{const d=Object.fromEntries(new FormData(e.currentTarget));await api("POST",d);e.currentTarget.reset();newsMessage.textContent="সংবাদ জমা হয়েছে। অ্যাডমিন অনুমোদনের পর প্রকাশিত হবে।";await loadPortal();}
- catch(err){newsMessage.textContent=err.message;}finally{b.disabled=false;}
+ catch(err){newsMessage.textContent=err.message;newsMessage.style.color=err.message.includes("কপি নিউজ")?"#c40000":"";}finally{b.disabled=false;}
 });
 (async()=>{if(!db){loginMessage.textContent="Supabase সেটিংস পাওয়া যায়নি।";return;}const {data}=await db.auth.getSession();if(data.session)await loadPortal();})();
 </script></body></html>
