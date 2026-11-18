@@ -205,8 +205,9 @@ async function loadNews() {
       : body;
 
     const meta = document.createElement("small");
+    meta.className = "news-byline";
     meta.textContent =
-      "প্রতিবেদক: " + (n.author || "অজানা") +
+      "রিপোর্ট: " + (n.author || "নাম উল্লেখ নেই") +
       " · " +
       new Date(n.created_at).toLocaleString("bn-BD");
 
