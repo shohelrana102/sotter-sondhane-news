@@ -407,6 +407,39 @@ async function updateStatus(id, status) {
 init();
 
 
+
+// অ্যাডমিনের নিউজের ছবি Supabase Storage-এ আপলোড
+async function uploadAdminNewsImage(file) {
+  if (!file) return "";
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error("শুধু JPG, PNG, WEBP অথবা GIF ছবি দিন।");
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("ছবির আকার ৫ MB-এর বেশি হতে পারবে না।");
+  }
+  const extension = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif"
+  }[file.type];
+  const fileName = Date.now() + "-" +
+    Math.random().toString(36).slice(2) + "." + extension;
+  const { data, error } = await db.storage
+    .from("news-images")
+    .upload(fileName, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type
+    });
+  if (error) throw new Error("ছবি আপলোড হয়নি: " + error.message);
+  const { data: publicData } = db.storage
+    .from("news-images")
+    .getPublicUrl(data.path);
+  return publicData.publicUrl;
+}
+
 // অ্যাডমিনের নিউজ সরাসরি প্রকাশ
 function setupAdminPublishForm() {
   const form = document.querySelector("#adminNewsForm");
@@ -418,14 +451,21 @@ function setupAdminPublishForm() {
     const msg = document.querySelector("#adminPublishMsg");
     const btn = form.querySelector('button[type="submit"]');
     const values = Object.fromEntries(new FormData(form));
+    const imageFile = document.querySelector("#adminImageFile")?.files?.[0] || null;
+    delete values.image_file;
     btn.disabled = true;
-    say(msg, "নিউজ প্রকাশ হচ্ছে...");
+    say(msg, imageFile ? "ছবি আপলোড হচ্ছে..." : "নিউজ প্রকাশ হচ্ছে...");
 
     try {
       const { data, error } = await db.auth.getSession();
       if (error) throw error;
       const token = data.session?.access_token;
       if (!token) throw new Error("আবার অ্যাডমিন লগইন করুন।");
+
+      if (imageFile) {
+        // ছবি আপলোড করা হলে সেটির লিংকটি ছবির URL ঘরের লিংকের পরিবর্তে ব্যবহৃত হবে।
+        values.image_url = await uploadAdminNewsImage(imageFile);
+      }
 
       const response = await fetch("/api/admin-publish-news", {
         method: "POST",
