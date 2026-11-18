@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123524">
+<title>সাংবাদিক পোর্টাল | সত্যের সন্ধানে সব সময়</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body{margin:0;background:#f2f6f3;color:#183528;font-family:Arial,sans-serif}
+.wrap{max-width:900px;margin:20px auto;padding:14px}
+.hero{background:linear-gradient(135deg,#123524,#267849);color:white;padding:24px;border-radius:16px;text-align:center}
+.panel{background:white;padding:20px;border-radius:14px;margin:16px 0;box-shadow:0 3px 15px #0000000b}
+input,textarea{display:block;width:100%;box-sizing:border-box;padding:13px;margin:9px 0 15px;border:1px solid #cbd6ce;border-radius:8px;font-size:16px}
+button{background:#176b3a;color:white;border:0;border-radius:8px;padding:12px 17px;font-size:15px;font-weight:bold;margin:5px}
+button:disabled{opacity:.6}
+.profile{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.profile img{width:116px;height:116px;border-radius:50%;object-fit:cover;border:4px solid #e4eee7}
+.muted{color:#66766c}.news-item{border:1px solid #dce5de;border-radius:10px;padding:14px;margin:12px 0}
+.status{font-weight:bold;color:#176b3a}
+[hidden]{display:none!important}
+</style>
+</head>
+<body><main class="wrap">
+<header class="hero"><h1>সত্যের সন্ধানে সব সময়</h1><h2>সাংবাদিক পোর্টাল</h2><p>আপনার নিজস্ব সংবাদ জমা ও প্রোফাইল</p></header>
+<section id="loginPanel" class="panel">
+<h2>সাংবাদিক লগইন</h2>
+<p>অ্যাডমিনের অনুমোদনের পর আপনার ইমেইলে আসা আমন্ত্রণ গ্রহণ করে পাসওয়ার্ড সেট করুন।</p>
+<form id="loginForm">
+<label>ইমেইল<input name="email" type="email" required autocomplete="username"></label>
+<label>পাসওয়ার্ড<input name="password" type="password" required autocomplete="current-password"></label>
+<button type="submit">লগইন করুন</button>
+</form><p id="loginMessage" role="status"></p>
+</section>
+<section id="portal" hidden>
+<section class="panel">
+<div class="profile"><img id="profilePhoto" alt="সাংবাদিকের ছবি"><div><h2 id="profileName"></h2><p id="profilePost"></p><p id="profileContact" class="muted"></p></div></div>
+<p id="profileAddress"></p><button id="logout" type="button">লগআউট</button>
+</section>
+<section class="panel">
+<h2>নতুন সংবাদ জমা দিন</h2>
+<p class="muted">আপনার সংবাদ অ্যাডমিন অনুমোদনের পর মূল ওয়েবসাইটে প্রকাশিত হবে।</p>
+<form id="newsForm">
+<label>সংবাদের শিরোনাম<input name="title" required minlength="5" maxlength="180"></label>
+<label>সংবাদের ছবি লিংক (ঐচ্ছিক)<input name="image_url" type="url" placeholder="https://..."></label>
+<label>YouTube ভিডিও লিংক (ঐচ্ছিক)<input name="video_url" type="url" placeholder="https://..."></label>
+<label>সংবাদের বিস্তারিত<textarea name="body" required minlength="20" maxlength="12000" rows="8"></textarea></label>
+<button type="submit">সংবাদ জমা দিন</button>
+</form><p id="newsMessage" role="status"></p>
+</section>
+<section class="panel"><h2>আমার জমা দেওয়া সংবাদ</h2><div id="myNews">লোড হচ্ছে...</div></section>
+</section>
+<p style="text-align:center"><a href="/">মূল নিউজ পোর্টাল</a> · <a href="reporter.html">সাংবাদিক আবেদন</a></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const cfg=window.PORTAL_CONFIG||{};
+const db=window.supabase?.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+const loginPanel=document.querySelector("#loginPanel"),portal=document.querySelector("#portal");
+const loginMessage=document.querySelector("#loginMessage"),newsMessage=document.querySelector("#newsMessage");
+async function api(method,body){
+ const {data}=await db.auth.getSession();
+ const r=await fetch("/api/reporter-portal",{method,headers:{"Content-Type":"application/json","Authorization":"Bearer "+data.session.access_token},body:body?JSON.stringify(body):undefined});
+ const j=await r.json();if(!r.ok)throw new Error(j.error||"সমস্যা হয়েছে।");return j;
+}
+async function loadPortal(){
+ try{
+  const d=await api("GET");
+  loginPanel.hidden=true;portal.hidden=false;
+  document.querySelector("#profilePhoto").src=d.profile.photo_url||"";
+  document.querySelector("#profileName").textContent=d.profile.full_name;
+  document.querySelector("#profilePost").textContent="পদ: "+d.profile.reporter_post;
+  document.querySelector("#profileContact").textContent="মোবাইল: "+d.profile.phone+" · "+d.profile.email;
+  document.querySelector("#profileAddress").textContent="ঠিকানা: "+d.profile.address;
+  const box=document.querySelector("#myNews");box.innerHTML="";
+  if(!d.news.length){box.textContent="এখনো কোনো সংবাদ জমা দেননি।";return;}
+  for(const n of d.news){const item=document.createElement("article");item.className="news-item";
+   const h=document.createElement("h3");h.textContent=n.title;
+   const p=document.createElement("p");p.textContent=n.body.length>260?n.body.slice(0,260)+"…":n.body;
+   const st=document.createElement("p");st.className="status";st.textContent=n.status==="approved"?"প্রকাশিত":n.status==="rejected"?"বাতিল":"অনুমোদনের অপেক্ষায়";
+   item.append(h,p,st);box.append(item);}
+ }catch(e){loginPanel.hidden=false;portal.hidden=true;loginMessage.textContent=e.message;}
+}
+document.querySelector("#loginForm").addEventListener("submit",async e=>{
+ e.preventDefault();const b=e.currentTarget.querySelector("button");b.disabled=true;loginMessage.textContent="লগইন হচ্ছে...";
+ try{const d=Object.fromEntries(new FormData(e.currentTarget));const {error}=await db.auth.signInWithPassword({email:d.email,password:d.password});if(error)throw error;await loadPortal();}
+ catch(err){loginMessage.textContent=err.message;}finally{b.disabled=false;}
+});
+document.querySelector("#logout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});
+document.querySelector("#newsForm").addEventListener("submit",async e=>{
+ e.preventDefault();const b=e.currentTarget.querySelector("button");b.disabled=true;newsMessage.textContent="সংবাদ জমা হচ্ছে...";
+ try{const d=Object.fromEntries(new FormData(e.currentTarget));await api("POST",d);e.currentTarget.reset();newsMessage.textContent="সংবাদ জমা হয়েছে। অ্যাডমিন অনুমোদনের পর প্রকাশিত হবে।";await loadPortal();}
+ catch(err){newsMessage.textContent=err.message;}finally{b.disabled=false;}
+});
+(async()=>{if(!db){loginMessage.textContent="Supabase সেটিংস পাওয়া যায়নি।";return;}const {data}=await db.auth.getSession();if(data.session)await loadPortal();})();
+</script></body></html>
