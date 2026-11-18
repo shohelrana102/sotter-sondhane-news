@@ -250,7 +250,7 @@
 <script src="app.js"></script>
 
 <script>
-  // রিপোর্টার অ্যাকাউন্টের আবেদন জমা
+  // রিপোর্টার অ্যাকাউন্টের আবেদন জমা ও অ্যাডমিনকে ইমেইল
   const registrationForm =
     document.querySelector("#registrationForm");
 
@@ -260,57 +260,38 @@
   registrationForm.addEventListener("submit", async function(e) {
     e.preventDefault();
 
-    const cfg = window.PORTAL_CONFIG || {};
-
-    if (
-      !window.supabase ||
-      !cfg.SUPABASE_URL ||
-      !cfg.SUPABASE_ANON_KEY
-    ) {
-      registrationMsg.textContent =
-        "Supabase সেটিংস পাওয়া যায়নি।";
-      return;
-    }
-
-    const db = window.supabase.createClient(
-      cfg.SUPABASE_URL,
-      cfg.SUPABASE_ANON_KEY
-    );
-
-    const d = Object.fromEntries(
-      new FormData(registrationForm)
-    );
-
-    const btn = registrationForm.querySelector(
-      'button[type="submit"]'
-    );
+    const d = Object.fromEntries(new FormData(registrationForm));
+    const btn = registrationForm.querySelector('button[type="submit"]');
 
     btn.disabled = true;
     registrationMsg.textContent = "আবেদন জমা হচ্ছে...";
 
     try {
-      const { error } = await db
-        .from("registration_requests")
-        .insert({
-          full_name: d.full_name.trim(),
-          email: d.email.trim().toLowerCase(),
-          phone: d.phone.trim(),
-          status: "pending"
-        });
+      const response = await fetch("/api/submit-reporter-application", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: String(d.full_name || "").trim(),
+          email: String(d.email || "").trim().toLowerCase(),
+          phone: String(d.phone || "").trim()
+        })
+      });
 
-      if (error) {
-        throw error;
+      const result = await response.json();
+
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || "আবেদন জমা হয়নি।");
       }
 
-      registrationMsg.textContent =
-        "আপনার আবেদন সফলভাবে জমা হয়েছে। অ্যাডমিনের অনুমোদনের জন্য অপেক্ষা করুন।";
-
       registrationForm.reset();
+
+      registrationMsg.textContent = result.notification_sent
+        ? "আপনার আবেদন সফলভাবে জমা হয়েছে। অ্যাডমিনকে ইমেইলে জানানো হয়েছে। অনুমোদনের জন্য অপেক্ষা করুন।"
+        : "আপনার আবেদন জমা হয়েছে। তবে অ্যাডমিনের ইমেইল নোটিফিকেশন পাঠানো যায়নি। অ্যাডমিন ড্যাশবোর্ডে আবেদনটি দেখা যাবে।";
 
     } catch (error) {
       registrationMsg.textContent =
         "আবেদন জমা হয়নি: " + error.message;
-
     } finally {
       btn.disabled = false;
     }
