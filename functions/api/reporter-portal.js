@@ -9,7 +9,7 @@ export async function onRequest({request,env}){
   if(!userRes.ok)return reply({error:"লগইন যাচাই হয়নি।"},401);
   const user=await userRes.json();
   const headers={apikey:service,Authorization:"Bearer "+service,"Content-Type":"application/json"};
-  const profileRes=await fetch(url+"/rest/v1/portal_reporters?user_id=eq."+encodeURIComponent(user.id)+"&active=eq.true&select=user_id,full_name,email,phone,address,reporter_post,photo_url,active", {headers});
+  const profileRes=await fetch(url+"/rest/v1/portal_reporters?user_id=eq."+encodeURIComponent(user.id)+"&active=eq.true&select=user_id,full_name,email,phone,address,reporter_post,photo_url,active",{headers});
   if(!profileRes.ok)return reply({error:"সাংবাদিকের তথ্য পাওয়া যায়নি।"},500);
   const rows=await profileRes.json(),profile=rows[0];
   if(!profile)return reply({error:"আপনার সাংবাদিক অনুমোদন সক্রিয় নেই। অ্যাডমিনের সঙ্গে যোগাযোগ করুন।"},403);
@@ -26,8 +26,28 @@ export async function onRequest({request,env}){
   if(title.length<5||title.length>180||body.length<20||body.length>12000)return reply({error:"শিরোনাম ও বিস্তারিত সঠিকভাবে লিখুন।"},400);
   if(image_url&&!/^https:\/\//i.test(image_url))return reply({error:"ছবির লিংক https:// দিয়ে শুরু হতে হবে।"},400);
   if(video_url&&!/^https:\/\//i.test(video_url))return reply({error:"ভিডিওর লিংক https:// দিয়ে শুরু হতে হবে।"},400);
+
+  // পুরোনো, অপেক্ষমাণ ও প্রকাশিত সংবাদে একই/খুব কাছাকাছি লেখা খোঁজা
+  const oldRes=await fetch(url+"/rest/v1/news?select=title,body&order=created_at.desc&limit=1000",{headers});
+  if(!oldRes.ok)return reply({error:"কপি-নিউজ যাচাই করা যাচ্ছে না। পরে আবার চেষ্টা করুন।"},503);
+  const oldNews=await oldRes.json();
+  const normalize=s=>String(s||"").toLocaleLowerCase("bn").normalize("NFKC").replace(/[০-৯]/g,c=>"০১২৩৪৫৬৭৮৯".indexOf(c)).replace(/[^\p{L}\p{N}\s]/gu," ").replace(/\s+/g," ").trim();
+  const grams=s=>{const w=normalize(s).split(" ").filter(x=>x.length>1);const set=new Set();for(let i=0;i+2<w.length;i++)set.add(w.slice(i,i+3).join(" "));return set;};
+  const similarity=(a,b)=>{const A=grams(a),B=grams(b);if(!A.size||!B.size)return 0;let common=0;for(const x of A)if(B.has(x))common++;return common/(A.size+B.size-common);};
+  const incoming=normalize(title+" "+body);
+  const incomingTitle=normalize(title);
+  for(const old of oldNews){
+   const previous=normalize((old.title||"")+" "+(old.body||""));
+   if(!previous)continue;
+   const titleMatch=incomingTitle.length>12&&normalize(old.title||"")===incomingTitle;
+   const exact=incoming.length>80&&(previous.includes(incoming)||incoming.includes(previous));
+   const score=similarity(title+" "+body,(old.title||"")+" "+(old.body||""));
+   if(titleMatch||exact||score>=0.62){
+    return reply({error:"কপি নিউজ! নিজের ভাষায় ও নিজস্ব তথ্য দিয়ে সংবাদ লিখুন। মিল পাওয়া সংবাদ জমা নেওয়া হয়নি।"},409);
+   }
+  }
   const insert=await fetch(url+"/rest/v1/news",{method:"POST",headers:{...headers,Prefer:"return=minimal"},body:JSON.stringify({title,body,author:profile.full_name,phone:profile.phone||"",image_url,video_url,status:"pending",reporter_id:user.id})});
-  if(!insert.ok)return reply({error:"সংবাদ জমা হয়নি। ডাটাবেজের নতুন SQL migration চালানো হয়েছে কি না দেখুন।"},400);
+  if(!insert.ok)return reply({error:"সংবাদ জমা হয়নি। পরে আবার চেষ্টা করুন।"},400);
   return reply({ok:true,message:"সংবাদ জমা হয়েছে।"});
  }catch(e){return reply({error:"সার্ভারে সমস্যা হয়েছে।"},500);}
 }
