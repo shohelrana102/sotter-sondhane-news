@@ -67,7 +67,11 @@ export async function onRequest({ request, env }) {
     );
 
     if (!adminCheck.ok) {
-      return reply({ error: "অ্যাডমিন যাচাই করা যায়নি।" }, 500);
+      const adminCheckError = await adminCheck.text();
+      return reply({
+        error: "অ্যাডমিন যাচাই করা যায়নি।",
+        details: adminCheckError
+      }, 500);
     }
 
     const admins = await adminCheck.json();
