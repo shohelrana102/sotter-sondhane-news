@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123524">
+<title>সাংবাদিক আবেদন | সত্যের সন্ধানে সব সময়</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body{margin:0;background:#f3f6f4;color:#173326;font-family:Arial,sans-serif}
+.apply-wrap{max-width:760px;margin:28px auto;padding:16px}
+.apply-head{background:linear-gradient(135deg,#123524,#237447);color:#fff;padding:28px 20px;border-radius:18px;text-align:center}
+.apply-card{background:#fff;padding:24px;border-radius:16px;margin-top:18px;box-shadow:0 5px 24px #12352412}
+.apply-card label{display:block;font-weight:600;margin:15px 0}
+.apply-card input,.apply-card select,.apply-card textarea{display:block;width:100%;box-sizing:border-box;padding:13px;margin-top:7px;border:1px solid #ccd6cf;border-radius:9px;font-size:16px;background:#fff}
+.apply-card button{background:#176b3a;color:white;border:0;border-radius:9px;padding:14px 20px;font-size:16px;font-weight:bold;width:100%;margin-top:12px}
+.apply-card button:disabled{opacity:.6}
+.hint{color:#65756b;font-size:13px;font-weight:normal}
+#applyMessage{font-weight:bold;line-height:1.6}
+</style>
+</head>
+<body>
+<main class="apply-wrap">
+<header class="apply-head">
+<h1>সত্যের সন্ধানে সব সময়</h1>
+<h2>সাংবাদিক / প্রতিনিধি নিয়োগ আবেদন</h2>
+<p>সত্য ও বস্তুনিষ্ঠ সংবাদ মানুষের কাছে পৌঁছে দিতে আমাদের সঙ্গে যুক্ত হোন।</p>
+</header>
+<section class="apply-card">
+<h2>আবেদন ফরম</h2>
+<p>সঠিক তথ্য দিয়ে আবেদন জমা দিন। যাচাই-বাছাই শেষে অ্যাডমিন অনুমোদন দিলে আপনাকে সাংবাদিক হিসেবে যুক্ত করা হবে।</p>
+<form id="reporterApplyForm">
+<label>আপনার পূর্ণ নাম *
+<input name="full_name" required maxlength="100" placeholder="পূর্ণ নাম লিখুন"></label>
+<label>মোবাইল নম্বর *
+<input name="phone" type="tel" required maxlength="20" placeholder="01XXXXXXXXX"></label>
+<label>ইমেইল ঠিকানা *
+<input name="email" type="email" required maxlength="254" placeholder="আপনার ইমেইল"></label>
+<label>বর্তমান ঠিকানা *
+<textarea name="address" required maxlength="300" rows="3" placeholder="গ্রাম/এলাকা, ইউনিয়ন, উপজেলা, জেলা"></textarea></label>
+<label>কোন পদে আবেদন করবেন? *
+<select name="reporter_post" required>
+<option value="">পদ নির্বাচন করুন</option>
+<option value="উপজেলা রিপোর্টার">উপজেলা রিপোর্টার</option>
+<option value="জেলা রিপোর্টার">জেলা রিপোর্টার</option>
+<option value="বিভাগীয় রিপোর্টার">বিভাগীয় রিপোর্টার</option>
+</select></label>
+<label>নিজের ছবি *
+<input name="photo" id="reporterPhoto" type="file" accept="image/jpeg,image/png,image/webp" required>
+<span class="hint">JPG, PNG অথবা WEBP; সর্বোচ্চ ৩ MB।</span></label>
+<button type="submit">আবেদন জমা দিন</button>
+<p id="applyMessage" role="status"></p>
+</form>
+</section>
+<p style="text-align:center"><a href="/">মূল নিউজ পোর্টালে ফিরে যান</a></p>
+</main>
+<script>
+const form=document.querySelector("#reporterApplyForm");
+const msg=document.querySelector("#applyMessage");
+form.addEventListener("submit",async e=>{
+ e.preventDefault();
+ const btn=form.querySelector("button");
+ const d=Object.fromEntries(new FormData(form));
+ const file=document.querySelector("#reporterPhoto").files[0];
+ if(!file){msg.textContent="আপনার ছবি নির্বাচন করুন।";return;}
+ if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>3*1024*1024){msg.textContent="JPG, PNG বা WEBP ছবি দিন; সর্বোচ্চ ৩ MB।";return;}
+ btn.disabled=true;msg.textContent="আবেদন জমা হচ্ছে...";
+ try{
+  const base64=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(",")[1]);r.onerror=reject;r.readAsDataURL(file);});
+  const response=await fetch("/api/submit-reporter-application",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({full_name:d.full_name,phone:d.phone,email:d.email,address:d.address,reporter_post:d.reporter_post,photo_base64:base64,photo_type:file.type})});
+  const result=await response.json();
+  if(!response.ok||!result.ok)throw new Error(result.error||"আবেদন জমা হয়নি।");
+  form.reset();msg.textContent="আপনার আবেদন সফলভাবে জমা হয়েছে। অ্যাডমিন যাচাই করে সিদ্ধান্ত জানাবেন।";
+ }catch(err){msg.textContent="সমস্যা: "+err.message;}finally{btn.disabled=false;}
+});
+</script>
+</body>
+</html>
