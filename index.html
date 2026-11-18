@@ -70,9 +70,7 @@
     <nav>
       <a href="#home">হোম</a>
       <a href="#news">সর্বশেষ সংবাদ</a>
-      <a href="#registration">রিপোর্টার আবেদন</a>
-      <a href="#submit">নিউজ পাঠান</a>
-      <a href="admin.html">অ্যাডমিন</a>
+      <a href="#about">আমাদের সম্পর্কে</a>
     </nav>
   </div>
 </header>
@@ -100,125 +98,6 @@
       <div id="newsList">
         সংবাদ লোড হচ্ছে...
       </div>
-    </div>
-  </section>
-
-
-  <!-- রিপোর্টার অ্যাকাউন্টের আবেদন -->
-  <section class="section" id="registration">
-    <div class="container">
-      <div class="registration-box">
-        <h2 class="section-title">🎙️ রিপোর্টার অ্যাকাউন্টের আবেদন</h2>
-
-        <p>
-          আমাদের পোর্টালে সংবাদ পাঠাতে চাইলে প্রথমে অ্যাকাউন্টের জন্য
-          আবেদন করুন। অ্যাডমিন অনুমোদন করলে আপনার অ্যাকাউন্ট তৈরি করা হবে।
-        </p>
-
-        <form id="registrationForm">
-
-          <label>
-            আপনার পূর্ণ নাম
-            <input
-              type="text"
-              name="full_name"
-              required
-              maxlength="100"
-              placeholder="আপনার নাম লিখুন">
-          </label>
-
-          <label>
-            ইমেইল ঠিকানা
-            <input
-              type="email"
-              name="email"
-              required
-              maxlength="254"
-              placeholder="আপনার ইমেইল লিখুন">
-          </label>
-
-          <label>
-            মোবাইল নম্বর
-            <input
-              type="tel"
-              name="phone"
-              maxlength="20"
-              placeholder="আপনার মোবাইল নম্বর">
-          </label>
-
-          <button type="submit" class="button">
-            অ্যাকাউন্টের আবেদন পাঠান
-          </button>
-
-          <p id="registrationMsg" aria-live="polite"></p>
-        </form>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- সংবাদ পাঠানোর ফরম -->
-  <section class="section" id="submit">
-    <div class="container">
-      <h2 class="section-title">✍️ আপনার সংবাদ পাঠান</h2>
-
-      <p>
-        সংবাদ পাঠানোর আগে রিপোর্টার অ্যাকাউন্টের অনুমোদন নিতে হবে।
-      </p>
-
-      <form id="submitForm">
-
-        <label>
-          সংবাদের শিরোনাম
-          <input
-            type="text"
-            name="title"
-            required
-            placeholder="সংবাদের শিরোনাম লিখুন">
-        </label>
-
-        <label>
-          রিপোর্টারের নাম
-          <input
-            type="text"
-            name="author"
-            required
-            placeholder="আপনার নাম লিখুন">
-        </label>
-
-        <label>
-          মোবাইল নম্বর
-          <input
-            type="tel"
-            name="phone"
-            placeholder="আপনার মোবাইল নম্বর">
-        </label>
-
-        <label>
-          সংবাদের বিস্তারিত
-          <textarea
-            name="body"
-            rows="7"
-            required
-            placeholder="সংবাদের বিস্তারিত লিখুন"></textarea>
-        </label>
-
-        <label>
-          সংবাদের ছবি (ঐচ্ছিক)
-          <input
-            type="file"
-            name="image_file"
-            id="imageFile"
-            accept="image/jpeg,image/png,image/webp,image/gif">
-          <small>মোবাইলের গ্যালারি থেকে ছবি দিন। সর্বোচ্চ ৫ MB।</small>
-        </label>
-
-        <button type="submit" class="button">
-          সংবাদ জমা দিন
-        </button>
-
-        <p id="formMsg" aria-live="polite"></p>
-      </form>
     </div>
   </section>
 
@@ -259,54 +138,7 @@
 <script src="config.js"></script>
 <script src="app.js"></script>
 
-<script>
-  // রিপোর্টার অ্যাকাউন্টের আবেদন জমা ও অ্যাডমিনকে ইমেইল
-  const registrationForm =
-    document.querySelector("#registrationForm");
 
-  const registrationMsg =
-    document.querySelector("#registrationMsg");
-
-  registrationForm.addEventListener("submit", async function(e) {
-    e.preventDefault();
-
-    const d = Object.fromEntries(new FormData(registrationForm));
-    const btn = registrationForm.querySelector('button[type="submit"]');
-
-    btn.disabled = true;
-    registrationMsg.textContent = "আবেদন জমা হচ্ছে...";
-
-    try {
-      const response = await fetch("/api/submit-reporter-application", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          full_name: String(d.full_name || "").trim(),
-          email: String(d.email || "").trim().toLowerCase(),
-          phone: String(d.phone || "").trim()
-        })
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.ok) {
-        throw new Error(result.error || "আবেদন জমা হয়নি।");
-      }
-
-      registrationForm.reset();
-
-      registrationMsg.textContent = result.notification_sent
-        ? "আপনার আবেদন সফলভাবে জমা হয়েছে। অ্যাডমিনকে ইমেইলে জানানো হয়েছে। অনুমোদনের জন্য অপেক্ষা করুন।"
-        : "আপনার আবেদন জমা হয়েছে। তবে অ্যাডমিনের ইমেইল নোটিফিকেশন পাঠানো যায়নি। অ্যাডমিন ড্যাশবোর্ডে আবেদনটি দেখা যাবে।";
-
-    } catch (error) {
-      registrationMsg.textContent =
-        "আবেদন জমা হয়নি: " + error.message;
-    } finally {
-      btn.disabled = false;
-    }
-  });
-</script>
 
 </body>
 </html>
