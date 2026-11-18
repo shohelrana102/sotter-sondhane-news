@@ -7,7 +7,7 @@ export async function onRequest({request,env}){
   const url=env.SUPABASE_URL,service=env.SUPABASE_SERVICE_ROLE_KEY;
   if(!url||!service)return reply({error:"সার্ভার সেটিংস পাওয়া যায়নি।"},500);
   const headers={apikey:service,Authorization:"Bearer "+service};
-  const r=await fetch(url+"/rest/v1/portal_reporters?user_id=eq."+encodeURIComponent(id)+"&active=eq.true&select=full_name,email,phone,address,reporter_post,photo_url",{headers});
+  const r=await fetch(url+"/rest/v1/portal_reporters?user_id=eq."+encodeURIComponent(id)+"&active=eq.true&select=full_name",{headers});
   if(!r.ok)return reply({error:"সাংবাদিকের তথ্য পাওয়া যায়নি।"},404);
   const rows=await r.json();
   if(!rows.length)return reply({error:"সাংবাদিকের প্রোফাইল পাওয়া যায়নি।"},404);
