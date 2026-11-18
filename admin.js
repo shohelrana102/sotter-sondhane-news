@@ -68,6 +68,8 @@ async function enter() {
   createRequestSection();
   setupAdminPublishForm();
   loadRequests();
+  createReporterManagementSection();
+  loadReporters();
   loadAdmin();
 }
 
@@ -145,6 +147,83 @@ function createRequestSection() {
 
   section.append(heading, refresh, list);
   dash.insertBefore(section, dash.firstChild);
+}
+
+// অনুমোদিত সাংবাদিকদের তালিকা ও অনুমোদন বাতিল
+function createReporterManagementSection() {
+  if (document.querySelector("#reporterManagement")) return;
+  const section = document.createElement("section");
+  section.id = "reporterManagement";
+  section.style.cssText = "background:white;padding:18px;border-radius:12px;margin:20px 0;";
+  const heading = document.createElement("h2");
+  heading.textContent = "সক্রিয় সাংবাদিকদের তালিকা";
+  const refresh = document.createElement("button");
+  refresh.className = "button outline";
+  refresh.textContent = "তালিকা রিফ্রেশ";
+  refresh.onclick = loadReporters;
+  const list = document.createElement("div");
+  list.id = "reporterList";
+  list.textContent = "লোড হচ্ছে...";
+  section.append(heading, refresh, list);
+  const requestSection = document.querySelector("#requestSection");
+  if (requestSection) requestSection.after(section);
+  else dash.insertBefore(section, dash.firstChild);
+}
+
+async function loadReporters() {
+  const box = document.querySelector("#reporterList");
+  if (!box) return;
+  box.textContent = "সাংবাদিকদের তালিকা লোড হচ্ছে...";
+  try {
+    const { data } = await db.auth.getSession();
+    const token = data.session?.access_token;
+    const response = await fetch("/api/manage-reporters", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      body: JSON.stringify({ action: "list" })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "তালিকা পাওয়া যায়নি।");
+    box.innerHTML = "";
+    const active = (result.reporters || []).filter(r => r.active !== false);
+    if (!active.length) { box.textContent = "এখনো কোনো সক্রিয় সাংবাদিক নেই।"; return; }
+    for (const r of active) {
+      const card = document.createElement("article");
+      card.className = "admin-card";
+      if (r.photo_url) {
+        const img = document.createElement("img");
+        img.src = r.photo_url; img.alt = "সাংবাদিকের ছবি";
+        img.style.cssText = "width:90px;height:90px;object-fit:cover;border-radius:50%;";
+        card.appendChild(img);
+      }
+      const h = document.createElement("h3"); h.textContent = r.full_name || "নাম নেই";
+      const detail = document.createElement("p");
+      detail.textContent = "পদ: " + (r.reporter_post || "উল্লেখ নেই") +
+        "\\nমোবাইল: " + (r.phone || "নেই") +
+        "\\nইমেইল: " + (r.email || "নেই") +
+        "\\nঠিকানা: " + (r.address || "নেই");
+      const remove = document.createElement("button");
+      remove.className = "button danger"; remove.textContent = "সাংবাদিক পদ বাতিল";
+      remove.onclick = async () => {
+        if (!confirm((r.full_name || "এই সাংবাদিক") + " -এর সাংবাদিক অনুমোদন বাতিল করবেন?")) return;
+        remove.disabled = true;
+        try {
+          const { data } = await db.auth.getSession();
+          const response = await fetch("/api/manage-reporters", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + data.session.access_token },
+            body: JSON.stringify({ action: "remove", user_id: r.user_id })
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || "বাতিল হয়নি।");
+          alert(result.message || "অনুমোদন বাতিল হয়েছে।");
+          loadReporters();
+        } catch (e) { alert(e.message); remove.disabled = false; }
+      };
+      card.append(h, detail, remove);
+      box.appendChild(card);
+    }
+  } catch (e) { box.textContent = "সমস্যা: " + e.message; }
 }
 
 // আবেদন লোড
