@@ -198,12 +198,6 @@ async function loadNews() {
       }
     }
 
-    const p = document.createElement("p");
-    const body = String(n.body || "");
-    p.textContent = body.length > 1000
-      ? body.slice(0, 1000) + "…"
-      : body;
-
     const meta = document.createElement("small");
     meta.className = "news-byline";
     meta.textContent =
@@ -211,7 +205,14 @@ async function loadNews() {
       " · " +
       new Date(n.created_at).toLocaleString("bn-BD");
 
-    card.append(p, meta);
+    const p = document.createElement("p");
+    const body = String(n.body || "");
+    p.textContent = body.length > 1000
+      ? body.slice(0, 1000) + "…"
+      : body;
+
+    // শিরোনাম → ছবি/ভিডিও → রিপোর্টারের নাম → সংবাদ বিবরণ
+    card.append(meta, p);
 
     addShareButtons(card, n);
     list.appendChild(card);
