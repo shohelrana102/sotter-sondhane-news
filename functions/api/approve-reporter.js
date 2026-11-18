@@ -123,7 +123,9 @@ export async function onRequest({ request, env }) {
           email: application.email,
           data: {
             full_name: application.full_name,
-            phone: application.phone || ""
+            phone: application.phone || "",
+            address: application.address || "",
+            reporter_post: application.reporter_post || ""
           }
         })
       }
@@ -151,7 +153,14 @@ export async function onRequest({ request, env }) {
           Prefer: "return=minimal"
         },
         body: JSON.stringify({
-          user_id: invitedUser.id
+          user_id: invitedUser.id,
+          full_name: application.full_name || "",
+          email: application.email || "",
+          phone: application.phone || "",
+          address: application.address || "",
+          reporter_post: application.reporter_post || "",
+          photo_url: application.photo_url || "",
+          active: true
         })
       }
     );
