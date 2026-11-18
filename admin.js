@@ -186,6 +186,20 @@ async function loadRequests() {
     const phone = document.createElement("p");
     phone.textContent = "মোবাইল: " + (request.phone || "দেওয়া হয়নি");
 
+    const address = document.createElement("p");
+    address.textContent = "ঠিকানা: " + (request.address || "দেওয়া হয়নি");
+
+    const post = document.createElement("p");
+    post.textContent = "আবেদনকৃত পদ: " + (request.reporter_post || "উল্লেখ নেই");
+
+    if (request.photo_url) {
+      const photo = document.createElement("img");
+      photo.src = request.photo_url;
+      photo.alt = "আবেদনকারীর ছবি";
+      photo.style.cssText = "width:120px;height:120px;object-fit:cover;border-radius:12px;";
+      card.appendChild(photo);
+    }
+
     const date = document.createElement("small");
     date.textContent =
       "আবেদনের তারিখ: " +
@@ -229,7 +243,7 @@ async function loadRequests() {
     };
 
     actions.append(approve, reject);
-    card.append(name, email, phone, date, info, actions);
+    card.append(name, email, phone, address, post, date, info, actions);
     box.appendChild(card);
   }
 }
