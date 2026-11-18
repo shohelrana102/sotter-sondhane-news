@@ -61,7 +61,8 @@ export async function onRequest({ request, env }) {
       `${SUPABASE_URL}/rest/v1/portal_admins?user_id=eq.${encodeURIComponent(user.id)}&select=user_id`,
       {
         headers: {
-          apikey: secretKey
+          apikey: secretKey,
+          Authorization: `Bearer ${secretKey}`
         }
       }
     );
@@ -69,8 +70,7 @@ export async function onRequest({ request, env }) {
     if (!adminCheck.ok) {
       const adminCheckError = await adminCheck.text();
       return reply({
-        error: "অ্যাডমিন যাচাই করা যায়নি।",
-        details: adminCheckError
+        error: "অ্যাডমিন যাচাই করা যায়নি: " + adminCheckError
       }, 500);
     }
 
