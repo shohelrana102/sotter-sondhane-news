@@ -91,6 +91,7 @@ export async function onRequest({ request, env }) {
 
     const adminHeaders = {
       apikey: secretKey,
+      Authorization: `Bearer ${secretKey}`,
       "Content-Type": "application/json"
     };
 
