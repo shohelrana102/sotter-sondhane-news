@@ -171,20 +171,23 @@ export async function onRequest({ request, env }) {
     );
 
     if (!reporterResponse.ok) {
+      const reporterError = await reporterResponse.text();
+
       // ব্যর্থ হলে তৈরি করা অ্যাকাউন্ট মুছে ফেলার চেষ্টা
-      await fetch(
+      const cleanupResponse = await fetch(
         `${SUPABASE_URL}/auth/v1/admin/users/${invitedUser.id}`,
         {
           method: "DELETE",
           headers: adminHeaders
         }
       );
+      const cleanupError = cleanupResponse.ok ? "" : await cleanupResponse.text();
 
       return reply({
-        error: "রিপোর্টার হিসেবে যুক্ত করা যায়নি।"
+        error: "রিপোর্টার হিসেবে যুক্ত করা যায়নি: " + reporterError +
+          (cleanupError ? " | অ্যাকাউন্ট পরিষ্কার করার সমস্যা: " + cleanupError : "")
       }, 500);
     }
-
     // আবেদন অনুমোদিত করা
     const updateResponse = await fetch(
       `${SUPABASE_URL}/rest/v1/registration_requests?id=eq.${encodeURIComponent(requestId)}`,
