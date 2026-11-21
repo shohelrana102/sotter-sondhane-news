@@ -201,7 +201,11 @@ async function loadReporters() {
       detail.textContent = "পদ: " + (r.reporter_post || "উল্লেখ নেই") +
         "\\nমোবাইল: " + (r.phone || "নেই") +
         "\\nইমেইল: " + (r.email || "নেই") +
-        "\\nঠিকানা: " + (r.address || "নেই");
+        "\\nঠিকানা: " + (r.address || "নেই") +
+        "\\nপ্রবাসী: " + (r.is_expatriate || "উল্লেখ নেই") +
+        "\\nবর্তমান দেশ: " + (r.current_country || "উল্লেখ নেই") +
+        "\\nসংবাদ এলাকা: " + (r.coverage_area || "উল্লেখ নেই") +
+        "\\nনাগরিকত্ব: " + (r.citizenship || "উল্লেখ নেই");
       const portalLink = document.createElement("a");
       portalLink.href = "reporter-dashboard.html";
       portalLink.textContent = "সাংবাদিক পোর্টাল";
@@ -276,6 +280,11 @@ async function loadRequests() {
 
     const post = document.createElement("p");
     post.textContent = "আবেদনকৃত পদ: " + (request.reporter_post || "উল্লেখ নেই");
+    const extra = document.createElement("p");
+    extra.textContent = "প্রবাসী: " + (request.is_expatriate || "উল্লেখ নেই") +
+      " · বর্তমান দেশ: " + (request.current_country || "উল্লেখ নেই") +
+      " · সংবাদ এলাকা: " + (request.coverage_area || "উল্লেখ নেই") +
+      " · নাগরিকত্ব: " + (request.citizenship || "উল্লেখ নেই");
 
     if (request.photo_url) {
       const photo = document.createElement("img");
@@ -328,7 +337,7 @@ async function loadRequests() {
     };
 
     actions.append(approve, reject);
-    card.append(name, email, phone, address, post, date, info, actions);
+    card.append(name, email, phone, address, post, extra, date, info, actions);
     box.appendChild(card);
   }
 }
