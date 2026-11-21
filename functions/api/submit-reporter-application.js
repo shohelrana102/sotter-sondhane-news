@@ -1,7 +1,7 @@
-
 const allowedOrigins = [
   "https://shotter-sondhane-news.pages.dev",
-  "https://sotter-sondhane-news.pages.dev"
+  "https://sotter-sondhane-news.pages.dev",
+  "https://5537b7cd.sotter-sondhane-news.pages.dev"
 ];
 
 export async function onRequest({ request, env }) {
