@@ -1,14 +1,16 @@
 const allowedOrigins = [
-  "https://shotter-sondhane-news.pages.dev",
-  "https://sotter-sondhane-news.pages.dev",
-  "https://5537b7cd.sotter-sondhane-news.pages.dev"
+  "https://sotter-sondhane-news.pages.dev"
 ];
+
+const isAllowedOrigin = (origin) =>
+  allowedOrigins.includes(origin) ||
+  /^https:\/\/[a-z0-9-]+\.sotter-sondhane-news\.pages\.dev$/.test(origin);
 
 export async function onRequest({ request, env }) {
   const origin = request.headers.get("Origin") || "";
 
   const corsHeaders = {
-    "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
+    "Access-Control-Allow-Origin": isAllowedOrigin(origin)
       ? origin
       : allowedOrigins[0],
     "Access-Control-Allow-Headers": "content-type",
@@ -33,7 +35,7 @@ export async function onRequest({ request, env }) {
     return reply({ error: "শুধু POST অনুরোধ গ্রহণযোগ্য।" }, 405);
   }
 
-  if (!allowedOrigins.includes(origin)) {
+  if (!isAllowedOrigin(origin)) {
     return reply({
       error: "এই ওয়েবসাইট থেকে আবেদন গ্রহণ করা যাচ্ছে না।"
     }, 403);
