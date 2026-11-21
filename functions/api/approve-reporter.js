@@ -8,11 +8,13 @@ const corsHeaders = (origin) => ({
 });
 
 export async function onRequest({ request, env }) {
+  const origin = request.headers.get("Origin") || "";
+  const headers = corsHeaders(origin);
   const reply = (data, status = 200) =>
     new Response(JSON.stringify(data), {
       status,
       headers: {
-        ...corsHeaders,
+        ...headers,
         "Content-Type": "application/json"
       }
     });
