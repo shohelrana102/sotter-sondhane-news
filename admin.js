@@ -124,7 +124,7 @@ document.querySelector("#logout").addEventListener("click", async () => {
   location.reload();
 });
 
-// রিপোর্টার আবেদন বিভাগ
+// প্রতিনিধি আবেদন বিভাগ
 function createRequestSection() {
   if (document.querySelector("#requestSection")) return;
 
@@ -134,7 +134,7 @@ function createRequestSection() {
     "background:white;padding:18px;border-radius:12px;margin:20px 0;";
 
   const heading = document.createElement("h2");
-  heading.textContent = "👥 রিপোর্টার অ্যাকাউন্টের আবেদন";
+  heading.textContent = "👥 প্রতিনিধি অ্যাকাউন্টের আবেদন";
 
   const refresh = document.createElement("button");
   refresh.className = "button outline";
@@ -201,7 +201,11 @@ async function loadReporters() {
       detail.textContent = "পদ: " + (r.reporter_post || "উল্লেখ নেই") +
         "\\nমোবাইল: " + (r.phone || "নেই") +
         "\\nইমেইল: " + (r.email || "নেই") +
-        "\\nঠিকানা: " + (r.address || "নেই");
+        "\\nঠিকানা: " + (r.address || "নেই") +
+        "\\nপ্রবাসী: " + (r.is_expatriate || "উল্লেখ নেই") +
+        "\\nবর্তমান দেশ: " + (r.current_country || "উল্লেখ নেই") +
+        "\\nসংবাদ এলাকা: " + (r.coverage_area || "উল্লেখ নেই") +
+        "\\nনাগরিকত্ব: " + (r.citizenship || "উল্লেখ নেই");
       const portalLink = document.createElement("a");
       portalLink.href = "reporter-dashboard.html";
       portalLink.textContent = "সাংবাদিক পোর্টাল";
@@ -276,6 +280,11 @@ async function loadRequests() {
 
     const post = document.createElement("p");
     post.textContent = "আবেদনকৃত পদ: " + (request.reporter_post || "উল্লেখ নেই");
+    const extra = document.createElement("p");
+    extra.textContent = "প্রবাসী: " + (request.is_expatriate || "উল্লেখ নেই") +
+      " · বর্তমান দেশ: " + (request.current_country || "উল্লেখ নেই") +
+      " · সংবাদ এলাকা: " + (request.coverage_area || "উল্লেখ নেই") +
+      " · নাগরিকত্ব: " + (request.citizenship || "উল্লেখ নেই");
 
     if (request.photo_url) {
       const photo = document.createElement("img");
@@ -292,7 +301,7 @@ async function loadRequests() {
 
     const info = document.createElement("p");
     info.textContent =
-      "অনুমোদন করলে রিপোর্টার অ্যাকাউন্ট তৈরি হবে এবং ইমেইলে আমন্ত্রণ যাবে।";
+      "অনুমোদন করলে প্রতিনিধি অ্যাকাউন্ট তৈরি হবে এবং ইমেইলে আমন্ত্রণ যাবে।";
 
     const actions = document.createElement("div");
     actions.className = "actions";
@@ -328,12 +337,12 @@ async function loadRequests() {
     };
 
     actions.append(approve, reject);
-    card.append(name, email, phone, address, post, date, info, actions);
+    card.append(name, email, phone, address, post, extra, date, info, actions);
     box.appendChild(card);
   }
 }
 
-// নতুন API দিয়ে রিপোর্টার অনুমোদন
+// নতুন API দিয়ে প্রতিনিধি অনুমোদন
 async function approveReporter(requestId) {
   try {
     const { data, error } = await db.auth.getSession();
@@ -365,7 +374,7 @@ async function approveReporter(requestId) {
 
     alert(
       result.message ||
-      "রিপোর্টার অ্যাকাউন্ট তৈরি হয়েছে। ইমেইল পাঠানো হয়েছে।"
+      "প্রতিনিধি অ্যাকাউন্ট তৈরি হয়েছে। ইমেইল পাঠানো হয়েছে।"
     );
 
     await loadRequests();

@@ -12,6 +12,12 @@ create table if not exists public.registration_requests (
 );
 
 alter table public.registration_requests
+  add column if not exists is_expatriate text not null default '',
+  add column if not exists current_country text not null default '',
+  add column if not exists coverage_area text not null default '',
+  add column if not exists citizenship text not null default '';
+
+alter table public.registration_requests
   add column if not exists address text not null default '',
   add column if not exists reporter_post text not null default '',
   add column if not exists photo_url text not null default '';
@@ -27,6 +33,12 @@ create table if not exists public.portal_reporters (
   active boolean not null default true,
   created_at timestamptz not null default now()
 );
+
+alter table public.portal_reporters
+  add column if not exists is_expatriate text not null default '',
+  add column if not exists current_country text not null default '',
+  add column if not exists coverage_area text not null default '',
+  add column if not exists citizenship text not null default '';
 
 alter table public.portal_reporters
   add column if not exists full_name text not null default '',

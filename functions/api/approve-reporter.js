@@ -1,21 +1,26 @@
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://shotter-sondhane-news.pages.dev",
+const allowedOrigins = ["https://sotter-sondhane-news.pages.dev", "https://shotter-sondhane-news.pages.dev"];
+
+const corsHeaders = (origin) => ({
+  "Access-Control-Allow-Origin": allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
-};
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Vary": "Origin"
+});
 
 export async function onRequest({ request, env }) {
+  const origin = request.headers.get("Origin") || "";
+  const headers = corsHeaders(origin);
   const reply = (data, status = 200) =>
     new Response(JSON.stringify(data), {
       status,
       headers: {
-        ...corsHeaders,
+        ...headers,
         "Content-Type": "application/json"
       }
     });
 
   if (request.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers });
   }
 
   if (request.method !== "POST") {
@@ -130,7 +135,11 @@ export async function onRequest({ request, env }) {
             full_name: application.full_name,
             phone: application.phone || "",
             address: application.address || "",
-            reporter_post: application.reporter_post || ""
+            reporter_post: application.reporter_post || "",
+            is_expatriate: application.is_expatriate || "",
+            current_country: application.current_country || "",
+            coverage_area: application.coverage_area || "",
+            citizenship: application.citizenship || ""
           }
         })
       }
@@ -164,6 +173,10 @@ export async function onRequest({ request, env }) {
           phone: application.phone || "",
           address: application.address || "",
           reporter_post: application.reporter_post || "",
+          is_expatriate: application.is_expatriate || "",
+          current_country: application.current_country || "",
+          coverage_area: application.coverage_area || "",
+          citizenship: application.citizenship || "",
           photo_url: application.photo_url || "",
           active: true
         })

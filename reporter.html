@@ -28,7 +28,7 @@ body{margin:0;background:#f3f6f4;color:#173326;font-family:Arial,sans-serif}
 </header>
 <section class="apply-card">
 <h2>আবেদন ফরম</h2>
-<p>সঠিক তথ্য দিয়ে আবেদন জমা দিন। যাচাই-বাছাই শেষে অ্যাডমিন অনুমোদন দিলে আপনাকে সাংবাদিক হিসেবে যুক্ত করা হবে।</p>
+<p>সঠিক তথ্য দিয়ে আবেদন জমা দিন। যাচাই-বাছাই শেষে অ্যাডমিন অনুমোদন দিলে আপনাকে প্রতিনিধি হিসেবে যুক্ত করা হবে।</p>
 <form id="reporterApplyForm">
 <label>আপনার পূর্ণ নাম *
 <input name="full_name" required maxlength="100" placeholder="পূর্ণ নাম লিখুন"></label>
@@ -41,10 +41,26 @@ body{margin:0;background:#f3f6f4;color:#173326;font-family:Arial,sans-serif}
 <label>কোন পদে আবেদন করবেন? *
 <select name="reporter_post" required>
 <option value="">পদ নির্বাচন করুন</option>
-<option value="উপজেলা রিপোর্টার">উপজেলা রিপোর্টার</option>
-<option value="জেলা রিপোর্টার">জেলা রিপোর্টার</option>
-<option value="বিভাগীয় রিপোর্টার">বিভাগীয় রিপোর্টার</option>
+<option value="উপজেলা প্রতিনিধি">উপজেলা প্রতিনিধি</option>
+<option value="জেলা প্রতিনিধি">জেলা প্রতিনিধি</option>
+<option value="বিভাগীয় প্রতিনিধি">বিভাগীয় প্রতিনিধি</option>
+<option value="জাতীয় প্রতিনিধি">জাতীয় প্রতিনিধি</option>
+<option value="আন্তর্জাতিক প্রতিনিধি">আন্তর্জাতিক প্রতিনিধি</option>
+<option value="প্রবাসী প্রতিনিধি">প্রবাসী প্রতিনিধি</option>
+<option value="বিশেষ সংবাদদাতা">বিশেষ সংবাদদাতা</option>
 </select></label>
+<label>আপনি কি প্রবাসী? *
+<select name="is_expatriate" id="isExpatriate" required>
+<option value="">নির্বাচন করুন</option>
+<option value="না">না</option>
+<option value="হ্যাঁ">হ্যাঁ</option>
+</select></label>
+<label>বর্তমানে কোন দেশে অবস্থান করছেন? *
+<input name="current_country" id="currentCountry" required maxlength="100" placeholder="যেমন: বাংলাদেশ"></label>
+<label>কোন শহর বা অঞ্চলে সংবাদ সংগ্রহ করবেন? *
+<input name="coverage_area" required maxlength="150" placeholder="শহর / অঞ্চল / উপজেলা"></label>
+<label>নাগরিকত্ব কোন দেশের? *
+<input name="citizenship" required maxlength="100" placeholder="যেমন: বাংলাদেশ"></label>
 <label>নিজের ছবি *
 <input name="photo" id="reporterPhoto" type="file" accept="image/jpeg,image/png,image/webp" required>
 <span class="hint">JPG, PNG অথবা WEBP; সর্বোচ্চ ৩ MB।</span></label>
@@ -57,6 +73,9 @@ body{margin:0;background:#f3f6f4;color:#173326;font-family:Arial,sans-serif}
 <script>
 const form=document.querySelector("#reporterApplyForm");
 const msg=document.querySelector("#applyMessage");
+const expatriateSelect=document.querySelector("#isExpatriate");
+const countryInput=document.querySelector("#currentCountry");
+expatriateSelect.addEventListener("change",()=>{countryInput.placeholder=expatriateSelect.value==="হ্যাঁ"?"বর্তমানে যে দেশে আছেন":"বাংলাদেশ";});
 form.addEventListener("submit",async e=>{
  e.preventDefault();
  const btn=form.querySelector("button");
@@ -67,7 +86,7 @@ form.addEventListener("submit",async e=>{
  btn.disabled=true;msg.textContent="আবেদন জমা হচ্ছে...";
  try{
   const base64=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(",")[1]);r.onerror=reject;r.readAsDataURL(file);});
-  const response=await fetch("/api/submit-reporter-application",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({full_name:d.full_name,phone:d.phone,email:d.email,address:d.address,reporter_post:d.reporter_post,photo_base64:base64,photo_type:file.type})});
+  const response=await fetch("/api/submit-reporter-application",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({full_name:d.full_name,phone:d.phone,email:d.email,address:d.address,reporter_post:d.reporter_post,is_expatriate:d.is_expatriate,current_country:d.current_country,coverage_area:d.coverage_area,citizenship:d.citizenship,photo_base64:base64,photo_type:file.type})});
   const result=await response.json();
   if(!response.ok||!result.ok)throw new Error(result.error||"আবেদন জমা হয়নি।");
   form.reset();msg.textContent="আপনার আবেদন সফলভাবে জমা হয়েছে। অ্যাডমিন যাচাই করে সিদ্ধান্ত জানাবেন।";

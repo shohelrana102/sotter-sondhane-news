@@ -1,14 +1,16 @@
-
 const allowedOrigins = [
-  "https://shotter-sondhane-news.pages.dev",
   "https://sotter-sondhane-news.pages.dev"
 ];
+
+const isAllowedOrigin = (origin) =>
+  allowedOrigins.includes(origin) ||
+  /^https:\/\/[a-z0-9-]+\.sotter-sondhane-news\.pages\.dev$/.test(origin);
 
 export async function onRequest({ request, env }) {
   const origin = request.headers.get("Origin") || "";
 
   const corsHeaders = {
-    "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
+    "Access-Control-Allow-Origin": isAllowedOrigin(origin)
       ? origin
       : allowedOrigins[0],
     "Access-Control-Allow-Headers": "content-type",
@@ -33,7 +35,7 @@ export async function onRequest({ request, env }) {
     return reply({ error: "শুধু POST অনুরোধ গ্রহণযোগ্য।" }, 405);
   }
 
-  if (!allowedOrigins.includes(origin)) {
+  if (!isAllowedOrigin(origin)) {
     return reply({
       error: "এই ওয়েবসাইট থেকে আবেদন গ্রহণ করা যাচ্ছে না।"
     }, 403);
@@ -70,6 +72,10 @@ export async function onRequest({ request, env }) {
       ? body.reporter_post.trim() : "";
 
     const photoType = body.photo_type;
+    const isExpatriate = typeof body.is_expatriate === "string" ? body.is_expatriate.trim() : "";
+    const currentCountry = typeof body.current_country === "string" ? body.current_country.trim() : "";
+    const coverageArea = typeof body.coverage_area === "string" ? body.coverage_area.trim() : "";
+    const citizenship = typeof body.citizenship === "string" ? body.citizenship.trim() : "";
 
     const allowedTypes = [
       "image/jpeg",
@@ -78,9 +84,13 @@ export async function onRequest({ request, env }) {
     ];
 
     const validPost = [
-      "উপজেলা রিপোর্টার",
-      "জেলা রিপোর্টার",
-      "বিভাগীয় রিপোর্টার"
+      "উপজেলা প্রতিনিধি",
+      "জেলা প্রতিনিধি",
+      "বিভাগীয় প্রতিনিধি",
+      "জাতীয় প্রতিনিধি",
+      "আন্তর্জাতিক প্রতিনিধি",
+      "প্রবাসী প্রতিনিধি",
+      "বিশেষ সংবাদদাতা"
     ].includes(reporterPost);
 
     if (
@@ -93,6 +103,10 @@ export async function onRequest({ request, env }) {
       !address ||
       address.length > 300 ||
       !validPost ||
+      !["হ্যাঁ", "না"].includes(isExpatriate) ||
+      !currentCountry || currentCountry.length > 100 ||
+      !coverageArea || coverageArea.length > 150 ||
+      !citizenship || citizenship.length > 100 ||
       !allowedTypes.includes(photoType) ||
       typeof body.photo_base64 !== "string" ||
       body.photo_base64.length > 4_300_000
@@ -165,6 +179,10 @@ export async function onRequest({ request, env }) {
           phone,
           address,
           reporter_post: reporterPost,
+          is_expatriate: isExpatriate,
+          current_country: currentCountry,
+          coverage_area: coverageArea,
+          citizenship,
           photo_url: photoUrl,
           status: "pending"
         })
@@ -216,6 +234,7 @@ export async function onRequest({ request, env }) {
               `ইমেইল: ${email}\n` +
               `ঠিকানা: ${address}\n` +
               `পদ: ${reporterPost}\n` +
+              `প্রবাসী: ${isExpatriate}\nদেশ: ${currentCountry}\nসংবাদ এলাকা: ${coverageArea}\nনাগরিকত্ব: ${citizenship}\n` +
               `ছবি: ${photoUrl}\n` +
               `অ্যাডমিন প্যানেলে আবেদন দেখুন।`
           })

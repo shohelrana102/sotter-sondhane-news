@@ -44,3 +44,17 @@ alter table public.registration_requests enable row level security;
 alter table public.portal_reporters enable row level security;
 revoke all on public.registration_requests from anon, authenticated;
 revoke all on public.portal_reporters from anon, authenticated;
+
+
+-- প্রতিনিধি নিয়োগ আবেদনের অতিরিক্ত তথ্য
+alter table public.registration_requests
+  add column if not exists is_expatriate text not null default '',
+  add column if not exists current_country text not null default '',
+  add column if not exists coverage_area text not null default '',
+  add column if not exists citizenship text not null default '';
+
+alter table public.portal_reporters
+  add column if not exists is_expatriate text not null default '',
+  add column if not exists current_country text not null default '',
+  add column if not exists coverage_area text not null default '',
+  add column if not exists citizenship text not null default '';
