@@ -124,7 +124,7 @@ document.querySelector("#logout").addEventListener("click", async () => {
   location.reload();
 });
 
-// রিপোর্টার আবেদন বিভাগ
+// প্রতিনিধি আবেদন বিভাগ
 function createRequestSection() {
   if (document.querySelector("#requestSection")) return;
 
@@ -134,7 +134,7 @@ function createRequestSection() {
     "background:white;padding:18px;border-radius:12px;margin:20px 0;";
 
   const heading = document.createElement("h2");
-  heading.textContent = "👥 রিপোর্টার অ্যাকাউন্টের আবেদন";
+  heading.textContent = "👥 প্রতিনিধি অ্যাকাউন্টের আবেদন";
 
   const refresh = document.createElement("button");
   refresh.className = "button outline";
@@ -301,7 +301,7 @@ async function loadRequests() {
 
     const info = document.createElement("p");
     info.textContent =
-      "অনুমোদন করলে রিপোর্টার অ্যাকাউন্ট তৈরি হবে এবং ইমেইলে আমন্ত্রণ যাবে।";
+      "অনুমোদন করলে প্রতিনিধি অ্যাকাউন্ট তৈরি হবে এবং ইমেইলে আমন্ত্রণ যাবে।";
 
     const actions = document.createElement("div");
     actions.className = "actions";
@@ -342,7 +342,7 @@ async function loadRequests() {
   }
 }
 
-// নতুন API দিয়ে রিপোর্টার অনুমোদন
+// নতুন API দিয়ে প্রতিনিধি অনুমোদন
 async function approveReporter(requestId) {
   try {
     const { data, error } = await db.auth.getSession();
@@ -374,7 +374,7 @@ async function approveReporter(requestId) {
 
     alert(
       result.message ||
-      "রিপোর্টার অ্যাকাউন্ট তৈরি হয়েছে। ইমেইল পাঠানো হয়েছে।"
+      "প্রতিনিধি অ্যাকাউন্ট তৈরি হয়েছে। ইমেইল পাঠানো হয়েছে।"
     );
 
     await loadRequests();
