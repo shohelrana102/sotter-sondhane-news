@@ -401,7 +401,43 @@ async function loadRequests() {
       reject.disabled = false;
     };
 
-    actions.append(approve, reject);
+    const deleteRequest = document.createElement("button");
+    deleteRequest.className = "button danger";
+    deleteRequest.textContent = "আবেদন স্থায়ীভাবে ডিলিট";
+    deleteRequest.onclick = async () => {
+      if (!confirm("সতর্কতা: এই আবেদন স্থায়ীভাবে মুছে যাবে। পরে আর ফিরিয়ে আনা যাবে না। নিশ্চিত?")) return;
+      const typed = prompt("নিশ্চিত করতে DELETE লিখুন:");
+      if (typed !== "DELETE") {
+        alert("নিশ্চিতকরণ মেলেনি। আবেদন মোছা হয়নি।");
+        return;
+      }
+      deleteRequest.disabled = true;
+      deleteRequest.textContent = "মুছে ফেলা হচ্ছে...";
+      try {
+        const { data: sessionData } = await db.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token) throw new Error("অ্যাডমিন লগইন করুন।");
+        const res = await fetch("/api/manage-reporters", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token,
+            "apikey": cfg.SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({ action: "request_delete", request_id: request.id })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error || "আবেদন মোছা যায়নি।");
+        alert(result.message || "আবেদন মুছে ফেলা হয়েছে।");
+        await loadRequests();
+      } catch (error) {
+        alert("আবেদন ডিলিট সমস্যা: " + error.message);
+        deleteRequest.disabled = false;
+        deleteRequest.textContent = "আবেদন স্থায়ীভাবে ডিলিট";
+      }
+    };
+
+    actions.append(approve, reject, deleteRequest);
     card.append(name, email, phone, address, post, citizenship, expatriate, currentCountry, date, info, actions);
     box.appendChild(card);
   }
