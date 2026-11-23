@@ -68,7 +68,7 @@ const newsForm=document.querySelector("#newsForm");
 ["title","body"].forEach(name=>{const field=newsForm.elements[name];field.addEventListener("paste",e=>{e.preventDefault();newsMessage.textContent="কপি নিউজ! এখানে কপি-পেস্ট করা যাবে না। নিজের ভাষায় লিখুন।";newsMessage.style.color="#c40000";});field.addEventListener("drop",e=>{e.preventDefault();newsMessage.textContent="কপি করা লেখা টেনে এনে বসানো যাবে না।";newsMessage.style.color="#c40000";});});
 async function api(method,body){
  const {data}=await db.auth.getSession();
- const r=await fetch("/api/reporter-portal",{method,headers:{"Content-Type":"application/json","Authorization":"Bearer "+data.session.access_token},body:body?JSON.stringify(body):undefined});
+ const r=await fetch("/api/reporter-portal",{method,headers:{"Content-Type":"application/json","Authorization":"Bearer "+data.session.access_token,"apikey":cfg.SUPABASE_ANON_KEY},body:body?JSON.stringify(body):undefined});
  const j=await r.json();if(!r.ok)throw new Error(j.error||"সমস্যা হয়েছে।");return j;
 }
 async function loadPortal(){

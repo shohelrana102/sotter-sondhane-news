@@ -15,7 +15,7 @@ export async function onRequest({ request, env }) {
   if (request.method !== "POST") return reply({ error: "শুধু POST অনুরোধ গ্রহণযোগ্য।" }, 405);
 
   try {
-    const url = env.SUPABASE_URL;
+    const url = env.SUPABASE_URL || "https://juitlxjvqzmuzumlphos.supabase.co";
     const secret = env.SUPABASE_SERVICE_ROLE_KEY;
     const anon = request.headers.get("apikey") || env.SUPABASE_ANON_KEY;
     if (!url || !secret || !anon) return reply({ error: "Cloudflare-এর Supabase ভেরিয়েবল পাওয়া যায়নি।" }, 500);

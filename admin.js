@@ -412,7 +412,8 @@ async function approveReporter(requestId) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + session.access_token
+        "Authorization": "Bearer " + session.access_token,
+        "apikey": cfg.SUPABASE_ANON_KEY
       },
       body: JSON.stringify({
         request_id: requestId
