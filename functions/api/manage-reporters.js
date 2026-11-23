@@ -51,13 +51,32 @@ export async function onRequest({ request, env }) {
       if (!r.ok) return reply({ error: "সংবাদ জমা দেওয়ার অনুমতি পরিবর্তন করা যায়নি।" }, 500);
       return reply({ ok: true, message: body.allowed ? "সংবাদ জমা দেওয়ার অনুমতি চালু হয়েছে।" : "এই প্রতিনিধির সংবাদ জমা সাময়িক বন্ধ করা হয়েছে।" });
     }
-    if (body.action === "delete" && typeof body.user_id === "string") {
+    if (body.action === "delete" && typeof body.user_id === "string" && body.user_id.trim()) {
       if (body.user_id === user.id) return reply({ error: "নিজের অ্যাডমিন অ্যাকাউন্ট এখানে মুছতে পারবেন না।" }, 400);
-      const r = await fetch(`${url}/auth/v1/admin/users/${encodeURIComponent(body.user_id)}`, {
-        method: "DELETE", headers: { apikey: service, Authorization: `Bearer ${service}` }
+
+      // First remove the journalist profile so it cannot retain portal access.
+      const profileDelete = await fetch(`${url}/rest/v1/portal_reporters?user_id=eq.${encodeURIComponent(body.user_id)}`, {
+        method: "DELETE",
+        headers: { ...headers, Prefer: "return=representation" }
       });
-      if (!r.ok) return reply({ error: "অ্যাকাউন্ট মুছে ফেলা যায়নি।" }, 500);
-      return reply({ ok: true, message: "প্রতিনিধির অ্যাকাউন্ট মুছে ফেলা হয়েছে। আগে প্রকাশিত সংবাদ সংরক্ষিত থাকবে।" });
+      if (!profileDelete.ok) {
+        return reply({ error: "সাংবাদিকের তালিকা থেকে তথ্য মুছতে সমস্যা হয়েছে: " + (await profileDelete.text()).slice(0, 300) }, 500);
+      }
+
+      // Then permanently delete the Supabase login account.
+      const authDelete = await fetch(`${url}/auth/v1/admin/users/${encodeURIComponent(body.user_id)}`, {
+        method: "DELETE",
+        headers: { apikey: service, Authorization: `Bearer ${service}` }
+      });
+      if (!authDelete.ok) {
+        return reply({
+          error: "সাংবাদিকের তালিকা থেকে তথ্য মুছে গেছে, কিন্তু লগইন অ্যাকাউন্ট মুছতে সমস্যা হয়েছে। আবার চেষ্টা করার আগে Supabase Auth Users-এ অ্যাকাউন্টের অবস্থা যাচাই করুন।"
+        }, 500);
+      }
+      return reply({
+        ok: true,
+        message: "সাংবাদিকের লগইন অ্যাকাউন্ট ও সাংবাদিক তালিকার তথ্য স্থায়ীভাবে মুছে ফেলা হয়েছে। আগে প্রকাশিত সংবাদ সংরক্ষিত থাকবে।"
+      });
     }
     if (body.action === "remove" && typeof body.user_id === "string") {
       const r = await fetch(`${url}/rest/v1/portal_reporters?user_id=eq.${encodeURIComponent(body.user_id)}`, {
