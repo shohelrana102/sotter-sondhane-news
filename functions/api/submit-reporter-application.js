@@ -70,6 +70,16 @@ export async function onRequest({ request, env }) {
     const reporterPost = typeof body.reporter_post === "string"
       ? body.reporter_post.trim() : "";
 
+    const citizenshipCountry = typeof body.citizenship_country === "string"
+      ? body.citizenship_country.trim() : "";
+
+    const expatriateValue = typeof body.is_expatriate === "string"
+      ? body.is_expatriate.trim() : "";
+
+    const currentCountry = typeof body.current_country === "string"
+      ? body.current_country.trim() : "";
+
+    const isExpatriate = expatriateValue === "হ্যাঁ";
     const photoType = body.photo_type;
 
     const allowedTypes = [
@@ -98,6 +108,11 @@ export async function onRequest({ request, env }) {
       !address ||
       address.length > 300 ||
       !validPost ||
+      !citizenshipCountry ||
+      citizenshipCountry.length > 80 ||
+      !["হ্যাঁ", "না"].includes(expatriateValue) ||
+      !currentCountry ||
+      currentCountry.length > 80 ||
       !allowedTypes.includes(photoType) ||
       typeof body.photo_base64 !== "string" ||
       body.photo_base64.length > 4_300_000
@@ -170,6 +185,9 @@ export async function onRequest({ request, env }) {
           phone,
           address,
           reporter_post: reporterPost,
+          citizenship_country: citizenshipCountry,
+          is_expatriate: isExpatriate,
+          current_country: currentCountry,
           photo_url: photoUrl,
           status: "pending"
         })
