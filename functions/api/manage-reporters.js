@@ -4,7 +4,7 @@ export async function onRequest({ request, env }) {
   });
   if (request.method !== "POST") return reply({ error: "শুধু POST গ্রহণযোগ্য।" }, 405);
   try {
-    const url = env.SUPABASE_URL, service = env.SUPABASE_SERVICE_ROLE_KEY, anon = env.SUPABASE_ANON_KEY;
+    const url = env.SUPABASE_URL, service = env.SUPABASE_SERVICE_ROLE_KEY, anon = request.headers.get("apikey") || env.SUPABASE_ANON_KEY;
     const auth = request.headers.get("Authorization") || "";
     if (!url || !service || !anon || !auth.startsWith("Bearer ")) return reply({ error: "অ্যাডমিন লগইন প্রয়োজন।" }, 401);
     const who = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anon, Authorization: auth } });
