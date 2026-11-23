@@ -179,7 +179,7 @@ async function loadReporters() {
     const token = data.session?.access_token;
     const response = await fetch("/api/manage-reporters", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, "apikey": cfg.SUPABASE_ANON_KEY },
       body: JSON.stringify({ action: "list" })
     });
     const result = await response.json();
@@ -225,7 +225,7 @@ async function loadReporters() {
           const { data: sessionData } = await db.auth.getSession();
           const res = await fetch("/api/manage-reporters", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sessionData.session.access_token },
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sessionData.session.access_token, "apikey": cfg.SUPABASE_ANON_KEY },
             body: JSON.stringify({ action: "set_submission", user_id: r.user_id, allowed })
           });
           const data = await res.json();
@@ -244,7 +244,7 @@ async function loadReporters() {
           const { data: sessionData } = await db.auth.getSession();
           const res = await fetch("/api/manage-reporters", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sessionData.session.access_token },
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sessionData.session.access_token, "apikey": cfg.SUPABASE_ANON_KEY },
             body: JSON.stringify({ action: "remove", user_id: r.user_id })
           });
           const data = await res.json();
@@ -267,7 +267,7 @@ async function loadReporters() {
           const { data: sessionData } = await db.auth.getSession();
           const res = await fetch("/api/manage-reporters", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sessionData.session.access_token },
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sessionData.session.access_token, "apikey": cfg.SUPABASE_ANON_KEY },
             body: JSON.stringify({ action: "delete", user_id: r.user_id })
           });
           const data = await res.json();
