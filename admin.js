@@ -203,7 +203,10 @@ async function loadReporters() {
       detail.textContent = "পদ: " + (r.reporter_post || "উল্লেখ নেই") +
         "\\nমোবাইল: " + (r.phone || "নেই") +
         "\\nইমেইল: " + (r.email || "নেই") +
-        "\\nঠিকানা: " + (r.address || "নেই");
+        "\\nঠিকানা: " + (r.address || "নেই") +
+        "\\nনাগরিকত্ব: " + (r.citizenship_country || "উল্লেখ নেই") +
+        "\\nপ্রবাসী: " + (r.is_expatriate === true ? "হ্যাঁ" : r.is_expatriate === false ? "না" : "উল্লেখ নেই") +
+        "\\nবর্তমান দেশ: " + (r.current_country || "উল্লেখ নেই");
       const state = document.createElement("p");
       state.textContent = r.can_submit === false ? "অবস্থা: সংবাদ জমা সাময়িক বন্ধ" : "অবস্থা: সংবাদ জমা চালু";
       state.style.color = r.can_submit === false ? "#b42318" : "#176b3a";
@@ -339,6 +342,15 @@ async function loadRequests() {
     const post = document.createElement("p");
     post.textContent = "আবেদনকৃত পদ: " + (request.reporter_post || "উল্লেখ নেই");
 
+    const citizenship = document.createElement("p");
+    citizenship.textContent = "নাগরিকত্ব: " + (request.citizenship_country || "উল্লেখ নেই");
+
+    const expatriate = document.createElement("p");
+    expatriate.textContent = "প্রবাসী: " + (request.is_expatriate === true ? "হ্যাঁ" : request.is_expatriate === false ? "না" : "উল্লেখ নেই");
+
+    const currentCountry = document.createElement("p");
+    currentCountry.textContent = "বর্তমান দেশ: " + (request.current_country || "উল্লেখ নেই");
+
     if (request.photo_url) {
       const photo = document.createElement("img");
       photo.src = request.photo_url;
@@ -390,7 +402,7 @@ async function loadRequests() {
     };
 
     actions.append(approve, reject);
-    card.append(name, email, phone, address, post, date, info, actions);
+    card.append(name, email, phone, address, post, citizenship, expatriate, currentCountry, date, info, actions);
     box.appendChild(card);
   }
 }
