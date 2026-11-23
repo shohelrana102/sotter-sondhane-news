@@ -187,6 +187,7 @@ async function loadReporters() {
     box.innerHTML = "";
     const active = (result.reporters || []).filter(r => r.active !== false);
     if (!active.length) { box.textContent = "এখনো কোনো সক্রিয় সাংবাদিক নেই।"; return; }
+
     for (const r of active) {
       const card = document.createElement("article");
       card.className = "admin-card";
@@ -198,15 +199,41 @@ async function loadReporters() {
       }
       const h = document.createElement("h3"); h.textContent = r.full_name || "নাম নেই";
       const detail = document.createElement("p");
+      detail.style.whiteSpace = "pre-line";
       detail.textContent = "পদ: " + (r.reporter_post || "উল্লেখ নেই") +
         "\\nমোবাইল: " + (r.phone || "নেই") +
         "\\nইমেইল: " + (r.email || "নেই") +
         "\\nঠিকানা: " + (r.address || "নেই");
+      const state = document.createElement("p");
+      state.textContent = r.can_submit === false ? "অবস্থা: সংবাদ জমা সাময়িক বন্ধ" : "অবস্থা: সংবাদ জমা চালু";
+      state.style.color = r.can_submit === false ? "#b42318" : "#176b3a";
+
       const portalLink = document.createElement("a");
       portalLink.href = "reporter-dashboard.html";
       portalLink.textContent = "সাংবাদিক পোর্টাল";
       portalLink.className = "button";
       portalLink.style.cssText = "display:inline-block;text-decoration:none;margin:5px;padding:10px 14px;background:#176b3a;color:white;border-radius:7px;";
+
+      const toggle = document.createElement("button");
+      toggle.className = "button outline";
+      toggle.textContent = r.can_submit === false ? "সংবাদ জমা চালু করুন" : "সংবাদ জমা সাময়িক বন্ধ করুন";
+      toggle.onclick = async () => {
+        const allowed = r.can_submit === false;
+        if (!confirm((r.full_name || "এই সাংবাদিক") + " -এর সংবাদ জমা " + (allowed ? "আবার চালু" : "সাময়িক বন্ধ") + " করবেন?")) return;
+        toggle.disabled = true;
+        try {
+          const { data: sessionData } = await db.auth.getSession();
+          const res = await fetch("/api/manage-reporters", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sessionData.session.access_token },
+            body: JSON.stringify({ action: "set_submission", user_id: r.user_id, allowed })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "পরিবর্তন করা যায়নি।");
+          alert(data.message);
+          await loadReporters();
+        } catch (e) { alert(e.message); toggle.disabled = false; }
+      };
 
       const remove = document.createElement("button");
       remove.className = "button danger"; remove.textContent = "সাংবাদিক পদ বাতিল";
@@ -214,19 +241,43 @@ async function loadReporters() {
         if (!confirm((r.full_name || "এই সাংবাদিক") + " -এর সাংবাদিক অনুমোদন বাতিল করবেন?")) return;
         remove.disabled = true;
         try {
-          const { data } = await db.auth.getSession();
-          const response = await fetch("/api/manage-reporters", {
+          const { data: sessionData } = await db.auth.getSession();
+          const res = await fetch("/api/manage-reporters", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + data.session.access_token },
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sessionData.session.access_token },
             body: JSON.stringify({ action: "remove", user_id: r.user_id })
           });
-          const result = await response.json();
-          if (!response.ok) throw new Error(result.error || "বাতিল হয়নি।");
-          alert(result.message || "অনুমোদন বাতিল হয়েছে।");
-          loadReporters();
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "বাতিল হয়নি।");
+          alert(data.message || "অনুমোদন বাতিল হয়েছে।");
+          await loadReporters();
         } catch (e) { alert(e.message); remove.disabled = false; }
       };
-      card.append(h, detail, portalLink, remove);
+
+      const del = document.createElement("button");
+      del.className = "button danger";
+      del.textContent = "অ্যাকাউন্ট স্থায়ীভাবে মুছুন";
+      del.onclick = async () => {
+        const first = confirm("সতর্কতা: " + (r.full_name || "এই সাংবাদিক") + " -এর লগইন অ্যাকাউন্ট স্থায়ীভাবে মুছে যাবে। আগে প্রকাশিত সংবাদ মুছবে না। আপনি কি নিশ্চিত?");
+        if (!first) return;
+        const second = prompt("নিশ্চিত করতে DELETE লিখুন:");
+        if (second !== "DELETE") { alert("নিশ্চিতকরণ মেলেনি। অ্যাকাউন্ট মোছা হয়নি।"); return; }
+        del.disabled = true;
+        try {
+          const { data: sessionData } = await db.auth.getSession();
+          const res = await fetch("/api/manage-reporters", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + sessionData.session.access_token },
+            body: JSON.stringify({ action: "delete", user_id: r.user_id })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "অ্যাকাউন্ট মোছা যায়নি।");
+          alert(data.message);
+          await loadReporters();
+        } catch (e) { alert(e.message); del.disabled = false; }
+      };
+
+      card.append(h, detail, state, portalLink, toggle, remove, del);
       box.appendChild(card);
     }
   } catch (e) { box.textContent = "সমস্যা: " + e.message; }
