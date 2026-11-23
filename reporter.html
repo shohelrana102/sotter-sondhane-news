@@ -229,6 +229,16 @@ form.addEventListener("submit",async e=>{
  e.preventDefault();
  const btn=form.querySelector("button");
  const d=Object.fromEntries(new FormData(form));
+ // প্রতিটি বাধ্যতামূলক ঘর খালি বা শুধু ফাঁকা জায়গা হলে আবেদন থামান
+ for(const field of form.querySelectorAll("[required]")){
+  if(field.type==="file" ? !field.files.length : !String(field.value||"").trim()){
+   field.setCustomValidity("এই ঘরটি পূরণ করা বাধ্যতামূলক।");
+   field.reportValidity();
+   field.setCustomValidity("");
+   return;
+  }
+ }
+ if(!form.reportValidity())return;
  const file=document.querySelector("#reporterPhoto").files[0];
  if(!file){msg.textContent="আপনার ছবি নির্বাচন করুন।";return;}
  if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>3*1024*1024){msg.textContent="JPG, PNG বা WEBP ছবি দিন; সর্বোচ্চ ৩ MB।";return;}
