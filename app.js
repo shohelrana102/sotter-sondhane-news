@@ -70,63 +70,78 @@ function addShareButtons(card, news) {
     "#news-" + encodeURIComponent(news.id);
 
   const title = news.title || "সত্যের সন্ধানে সব সময়";
+  const shareText = title + "\n" + url;
 
   const shareBox = document.createElement("div");
-  shareBox.className = "actions";
+  shareBox.className = "actions share-actions";
+  shareBox.setAttribute("aria-label", "সংবাদ শেয়ার করুন");
 
-  function makeLink(text, href) {
+  function makeLink(text, href, label) {
     const a = document.createElement("a");
     a.className = "button outline";
     a.textContent = text;
     a.href = href;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
+    a.setAttribute("aria-label", label || text);
     shareBox.appendChild(a);
   }
 
-  makeLink(
-    "Facebook",
-    "https://www.facebook.com/sharer/sharer.php?u=" +
-      encodeURIComponent(url)
-  );
-
-  makeLink(
-    "WhatsApp",
-    "https://wa.me/?text=" +
-      encodeURIComponent(title + "\n" + url)
-  );
-
-  makeLink(
-    "Twitter / X",
-    "https://twitter.com/intent/tweet?text=" +
-      encodeURIComponent(title) +
-      "&url=" + encodeURIComponent(url)
-  );
-
-  const share = document.createElement("button");
-  share.type = "button";
-  share.className = "button";
-  share.textContent = "আরও শেয়ার";
-
-  share.addEventListener("click", async () => {
+  async function shareWithPhone(titleText) {
     try {
       if (navigator.share) {
         await navigator.share({
-          title,
-          text: title,
+          title: titleText,
+          text: titleText,
           url
         });
       } else {
         await copyLink(url);
+        alert("লিংক কপি হয়েছে। এখন Instagram বা Messenger খুলে পেস্ট করে শেয়ার করুন।");
       }
     } catch (e) {
       if (e.name !== "AbortError") {
         await copyLink(url);
       }
     }
-  });
+  }
 
-  shareBox.appendChild(share);
+  makeLink(
+    "📘 Facebook",
+    "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url),
+    "Facebook-এ সংবাদ শেয়ার করুন"
+  );
+
+  makeLink(
+    "🟢 WhatsApp",
+    "https://wa.me/?text=" + encodeURIComponent(shareText),
+    "WhatsApp-এ সংবাদ শেয়ার করুন"
+  );
+
+  makeLink(
+    "𝕏 Twitter",
+    "https://twitter.com/intent/tweet?text=" +
+      encodeURIComponent(title) +
+      "&url=" + encodeURIComponent(url),
+    "Twitter বা X-এ সংবাদ শেয়ার করুন"
+  );
+
+  const instagram = document.createElement("button");
+  instagram.type = "button";
+  instagram.className = "button outline";
+  instagram.textContent = "📸 Instagram";
+  instagram.setAttribute("aria-label", "Instagram-এ সংবাদ শেয়ার করুন");
+  instagram.addEventListener("click", () => shareWithPhone(title));
+  shareBox.appendChild(instagram);
+
+  const messenger = document.createElement("button");
+  messenger.type = "button";
+  messenger.className = "button outline";
+  messenger.textContent = "💬 Messenger";
+  messenger.setAttribute("aria-label", "Messenger-এ সংবাদ শেয়ার করুন");
+  messenger.addEventListener("click", () => shareWithPhone(title));
+  shareBox.appendChild(messenger);
+
   card.appendChild(shareBox);
 }
 
