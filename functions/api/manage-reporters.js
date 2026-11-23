@@ -19,6 +19,22 @@ export async function onRequest({ request, env }) {
       if (!r.ok) return reply({ error: "সাংবাদিক তালিকা লোড হয়নি। SQL migration চালান।" }, 500);
       return reply({ ok: true, reporters: await r.json() });
     }
+    if (body.action === "set_submission" && typeof body.user_id === "string" && typeof body.allowed === "boolean") {
+      const r = await fetch(`${url}/rest/v1/portal_reporters?user_id=eq.${encodeURIComponent(body.user_id)}`, {
+        method: "PATCH", headers: { ...headers, Prefer: "return=minimal" },
+        body: JSON.stringify({ can_submit: body.allowed })
+      });
+      if (!r.ok) return reply({ error: "সংবাদ জমা দেওয়ার অনুমতি পরিবর্তন করা যায়নি।" }, 500);
+      return reply({ ok: true, message: body.allowed ? "সংবাদ জমা দেওয়ার অনুমতি চালু হয়েছে।" : "এই সাংবাদিকের সংবাদ জমা সাময়িক বন্ধ করা হয়েছে।" });
+    }
+    if (body.action === "delete" && typeof body.user_id === "string") {
+      if (body.user_id === user.id) return reply({ error: "নিজের অ্যাডমিন অ্যাকাউন্ট এখানে মুছতে পারবেন না।" }, 400);
+      const r = await fetch(`${url}/auth/v1/admin/users/${encodeURIComponent(body.user_id)}`, {
+        method: "DELETE", headers: { apikey: service, Authorization: `Bearer ${service}` }
+      });
+      if (!r.ok) return reply({ error: "অ্যাকাউন্ট মুছে ফেলা যায়নি।" }, 500);
+      return reply({ ok: true, message: "সাংবাদিকের অ্যাকাউন্ট মুছে ফেলা হয়েছে। আগে প্রকাশিত সংবাদ সংরক্ষিত থাকবে।" });
+    }
     if (body.action === "remove" && typeof body.user_id === "string") {
       const r = await fetch(`${url}/rest/v1/portal_reporters?user_id=eq.${encodeURIComponent(body.user_id)}`, {
         method: "PATCH", headers: { ...headers, Prefer: "return=minimal" },
