@@ -1,10 +1,17 @@
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://shotter-sondhane-news.pages.dev",
-  "Access-Control-Allow-Headers": "authorization, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
-};
+function getCorsHeaders(request) {
+  const origin = request.headers.get("Origin");
+  const requestUrl = new URL(request.url);
+  const allowedOrigin = origin && origin === requestUrl.origin ? origin : requestUrl.origin;
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Vary": "Origin",
+    "Access-Control-Allow-Headers": "authorization, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS"
+  };
+}
 
 export async function onRequest({ request, env }) {
+  const corsHeaders = getCorsHeaders(request);
   const reply = (data, status = 200) =>
     new Response(JSON.stringify(data), {
       status,
