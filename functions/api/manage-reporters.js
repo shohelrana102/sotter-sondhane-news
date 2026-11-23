@@ -29,6 +29,15 @@ export async function onRequest({ request, env }) {
       if (!rows.length) return reply({ error: "আবেদনটি পাওয়া যায়নি অথবা আগেই নিষ্পত্তি হয়েছে।" }, 409);
       return reply({ ok: true, message: "আবেদন বাতিল করা হয়েছে।" });
     }
+    if (body.action === "request_delete" && typeof body.request_id === "string" && body.request_id.trim()) {
+      const r = await fetch(`${url}/rest/v1/registration_requests?id=eq.${encodeURIComponent(body.request_id)}&status=eq.pending`, {
+        method: "DELETE", headers: { ...headers, Prefer: "return=representation" }
+      });
+      if (!r.ok) return reply({ error: "আবেদন ডিলিট করা যায়নি: " + (await r.text()).slice(0, 300) }, 500);
+      const rows = await r.json();
+      if (!rows.length) return reply({ error: "আবেদনটি পাওয়া যায়নি অথবা এটি আর পেন্ডিং অবস্থায় নেই।" }, 409);
+      return reply({ ok: true, message: "আবেদন স্থায়ীভাবে মুছে ফেলা হয়েছে।" });
+    }
     if (body.action === "list") {
       const r = await fetch(`${url}/rest/v1/portal_reporters?select=*&order=created_at.desc`, { headers });
       if (!r.ok) return reply({ error: "সাংবাদিকদের তালিকা লোড হয়নি। SQL migration চালান।" }, 500);
