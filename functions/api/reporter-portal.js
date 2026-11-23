@@ -2,7 +2,7 @@ export async function onRequest({request,env}){
  const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{"Content-Type":"application/json","Cache-Control":"no-store"}});
  if(!["GET","POST"].includes(request.method))return reply({error:"অনুরোধ গ্রহণযোগ্য নয়।"},405);
  try{
-  const url=env.SUPABASE_URL,service=env.SUPABASE_SERVICE_ROLE_KEY,anon=env.SUPABASE_ANON_KEY;
+  const url=env.SUPABASE_URL || "https://juitlxjvqzmuzumlphos.supabase.co",service=env.SUPABASE_SERVICE_ROLE_KEY,anon=request.headers.get("apikey") || env.SUPABASE_ANON_KEY;
   const auth=request.headers.get("Authorization")||"";
   if(!url||!service||!anon||!auth.startsWith("Bearer "))return reply({error:"সাংবাদিক হিসেবে লগইন করুন।"},401);
   const userRes=await fetch(url+"/auth/v1/user",{headers:{apikey:anon,Authorization:auth}});

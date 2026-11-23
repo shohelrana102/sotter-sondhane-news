@@ -23,9 +23,9 @@ export async function onRequest({ request, env }) {
   }
 
   try {
-    const SUPABASE_URL = env.SUPABASE_URL;
+    const SUPABASE_URL = env.SUPABASE_URL || "https://juitlxjvqzmuzumlphos.supabase.co";
     const secretKey = env.SUPABASE_SERVICE_ROLE_KEY;
-    const anonKey = env.SUPABASE_ANON_KEY;
+    const anonKey = request.headers.get("apikey") || env.SUPABASE_ANON_KEY;
 
     if (!SUPABASE_URL || !secretKey || !anonKey) {
       return reply({

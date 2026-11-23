@@ -43,7 +43,7 @@ export async function onRequest({ request, env }) {
   let uploadedPath = "";
 
   try {
-    const supabaseUrl = env.SUPABASE_URL;
+    const supabaseUrl = env.SUPABASE_URL || "https://juitlxjvqzmuzumlphos.supabase.co";
     const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY;
     const resendKey = env.RESEND_API_KEY;
 
