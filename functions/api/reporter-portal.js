@@ -9,10 +9,11 @@ export async function onRequest({request,env}){
   if(!userRes.ok)return reply({error:"লগইন যাচাই হয়নি।"},401);
   const user=await userRes.json();
   const headers={apikey:service,Authorization:"Bearer "+service,"Content-Type":"application/json"};
-  const profileRes=await fetch(url+"/rest/v1/portal_reporters?user_id=eq."+encodeURIComponent(user.id)+"&active=eq.true&select=user_id,full_name,email,phone,address,reporter_post,photo_url,active",{headers});
+  const profileRes=await fetch(url+"/rest/v1/portal_reporters?user_id=eq."+encodeURIComponent(user.id)+"&active=eq.true&select=user_id,full_name,email,phone,address,reporter_post,photo_url,active,can_submit",{headers});
   if(!profileRes.ok)return reply({error:"সাংবাদিকের তথ্য পাওয়া যায়নি।"},500);
   const rows=await profileRes.json(),profile=rows[0];
   if(!profile)return reply({error:"আপনার সাংবাদিক অনুমোদন সক্রিয় নেই। অ্যাডমিনের সঙ্গে যোগাযোগ করুন।"},403);
+  if(request.method==="POST" && !["update_profile"].includes((await request.clone().json().catch(()=>({}))).action) && profile.can_submit===false)return reply({error:"অ্যাডমিন সাময়িকভাবে আপনার সংবাদ জমা বন্ধ রেখেছেন।"},403);
   if(request.method==="GET"){
    const nr=await fetch(url+"/rest/v1/news?reporter_id=eq."+encodeURIComponent(user.id)+"&select=id,title,body,status,created_at&order=created_at.desc&limit=50",{headers});
    if(!nr.ok)return reply({error:"আপনার সংবাদ তালিকা লোড হয়নি।"},500);
