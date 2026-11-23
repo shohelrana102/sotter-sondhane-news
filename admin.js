@@ -598,7 +598,8 @@ function setupAdminPublishForm() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer " + token
+          "Authorization": "Bearer " + token,
+          "apikey": cfg.SUPABASE_ANON_KEY
         },
         body: JSON.stringify(values)
       });
