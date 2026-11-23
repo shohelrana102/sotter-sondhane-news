@@ -130,7 +130,10 @@ export async function onRequest({ request, env }) {
             full_name: application.full_name,
             phone: application.phone || "",
             address: application.address || "",
-            reporter_post: application.reporter_post || ""
+            reporter_post: application.reporter_post || "",
+            citizenship_country: application.citizenship_country || "",
+            is_expatriate: application.is_expatriate === true,
+            current_country: application.current_country || ""
           }
         })
       }
@@ -164,6 +167,9 @@ export async function onRequest({ request, env }) {
           phone: application.phone || "",
           address: application.address || "",
           reporter_post: application.reporter_post || "",
+          citizenship_country: application.citizenship_country || "",
+          is_expatriate: application.is_expatriate === true,
+          current_country: application.current_country || "",
           photo_url: application.photo_url || "",
           active: true
         })
