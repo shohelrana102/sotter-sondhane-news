@@ -1,5 +1,5 @@
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://shotter-sondhane-news.pages.dev",
+  "Access-Control-Allow-Origin": "https://sotter-sondhane-news.pages.dev",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS"
 };
@@ -17,7 +17,7 @@ export async function onRequest({ request, env }) {
   try {
     const url = env.SUPABASE_URL;
     const secret = env.SUPABASE_SERVICE_ROLE_KEY;
-    const anon = env.SUPABASE_ANON_KEY;
+    const anon = request.headers.get("apikey") || env.SUPABASE_ANON_KEY;
     if (!url || !secret || !anon) return reply({ error: "Cloudflare-এর Supabase ভেরিয়েবল পাওয়া যায়নি।" }, 500);
 
     const authorization = request.headers.get("Authorization");
