@@ -68,7 +68,7 @@ app.get("/api/news", (req,res)=>res.json(getNews.all()));
 app.post("/api/submit", (req,res)=>{
  const {title,body,author,phone="",image_url=""}=req.body;
  if (![title,body,author].every(x=>typeof x==="string" && x.trim()) || title.length>180 || body.length>15000 || author.length>80) {
-  return res.status(400).json({error:"শিরোনাম, বিস্তারিত ও প্রতিবেদকের নাম দিন।"});
+  return res.status(400).json({error:"শিরোনাম, বিস্তারিত ও প্রতিনিধির নাম দিন।"});
  }
  const duplicate=findDuplicate(title,body);
  if (duplicate) return res.status(409).json({error:"সম্ভাব্য কপি/ডুপ্লিকেট নিউজ শনাক্ত হয়েছে। এটি জমা নেওয়া হয়নি।", match:duplicate.row.title});

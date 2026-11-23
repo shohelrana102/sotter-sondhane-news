@@ -64,7 +64,7 @@ begin
   if p_title is null or char_length(trim(p_title)) < 5 or char_length(p_title) > 180
      or p_body is null or char_length(trim(p_body)) < 20 or char_length(p_body) > 12000
      or p_author is null or char_length(trim(p_author)) < 2 or char_length(p_author) > 80 then
-    raise exception 'শিরোনাম, বিস্তারিত ও প্রতিবেদকের নাম সঠিকভাবে দিন।';
+    raise exception 'শিরোনাম, বিস্তারিত ও প্রতিনিধির নাম সঠিকভাবে দিন।';
   end if;
   candidate := lower(regexp_replace(trim(p_title || ' ' || p_body), '[[:space:][:punct:]]+', ' ', 'g'));
   select n.title into matched_title
