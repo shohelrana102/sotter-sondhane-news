@@ -41,7 +41,10 @@ export async function onRequest({ request, env }) {
     const body = typeof input.body === "string" ? input.body.trim() : "";
     const author = typeof input.author === "string" ? input.author.trim() : "";
     const phone = typeof input.phone === "string" ? input.phone.trim().slice(0, 30) : "";
-    const image_url = typeof input.image_url === "string" ? input.image_url.trim().slice(0, 500) : "";
+    let image_url = typeof input.image_url === "string" ? input.image_url.trim().slice(0, 500) : "";
+    const imageBase64 = typeof input.image_base64 === "string" ? input.image_base64 : "";
+    const imageType = typeof input.image_type === "string" ? input.image_type : "";
+    let uploadedImagePath = "";
     const video_url = typeof input.video_url === "string" ? input.video_url.trim().slice(0, 500) : "";
 
     if (title.length < 5 || title.length > 180 || body.length < 20 || body.length > 12000 || author.length < 2 || author.length > 80) {
@@ -65,6 +68,47 @@ export async function onRequest({ request, env }) {
       }
     }
 
+
+    if (imageBase64 || imageType) {
+      const imageTypes = {
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp",
+        "image/gif": "gif"
+      };
+      if (!imageTypes[imageType] || imageBase64.length > 7_000_000) {
+        return reply({ error: "ছবির ধরন সঠিক নয় অথবা ছবিটি ৫ MB-এর বেশি।" }, 400);
+      }
+      let binary;
+      try {
+        binary = Uint8Array.from(atob(imageBase64), ch => ch.charCodeAt(0));
+      } catch {
+        return reply({ error: "ছবির তথ্য পড়া যায়নি। আবার ছবি নির্বাচন করুন।" }, 400);
+      }
+      if (!binary.length || binary.length > 5 * 1024 * 1024) {
+        return reply({ error: "ছবির আকার ৫ MB-এর বেশি।" }, 400);
+      }
+      uploadedImagePath = "admin-news/" + crypto.randomUUID() + "." + imageTypes[imageType];
+      const storageResponse = await fetch(
+        `${url}/storage/v1/object/news-images/${uploadedImagePath}`,
+        {
+          method: "POST",
+          headers: {
+            apikey: secret,
+            Authorization: `Bearer ${secret}`,
+            "Content-Type": imageType,
+            "x-upsert": "false"
+          },
+          body: binary
+        }
+      );
+      if (!storageResponse.ok) {
+        const detail = await storageResponse.text();
+        return reply({ error: "ছবি আপলোড হয়নি: " + detail.slice(0, 350) }, 400);
+      }
+      image_url = `${url}/storage/v1/object/public/news-images/${uploadedImagePath}`;
+    }
+
     const insertRes = await fetch(`${url}/rest/v1/news`, {
       method: "POST",
       headers: {
@@ -77,6 +121,12 @@ export async function onRequest({ request, env }) {
     });
     if (!insertRes.ok) {
       const detail = await insertRes.text();
+      if (uploadedImagePath) {
+        await fetch(`${url}/storage/v1/object/news-images/${uploadedImagePath}`, {
+          method: "DELETE",
+          headers: { apikey: secret, Authorization: `Bearer ${secret}` }
+        });
+      }
       return reply({ error: "নিউজ প্রকাশ করা যায়নি: " + detail.slice(0, 500) }, 400);
     }
     const rows = await insertRes.json();

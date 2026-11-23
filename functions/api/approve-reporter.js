@@ -148,7 +148,7 @@ export async function onRequest({ request, env }) {
       }, 400);
     }
 
-    // রিপোর্টার হিসেবে যুক্ত করা
+    // প্রতিনিধি হিসেবে যুক্ত করা
     const reporterResponse = await fetch(
       `${SUPABASE_URL}/rest/v1/portal_reporters`,
       {
@@ -184,7 +184,7 @@ export async function onRequest({ request, env }) {
       const cleanupError = cleanupResponse.ok ? "" : await cleanupResponse.text();
 
       return reply({
-        error: "রিপোর্টার হিসেবে যুক্ত করা যায়নি: " + reporterError +
+        error: "প্রতিনিধি হিসেবে যুক্ত করা যায়নি: " + reporterError +
           (cleanupError ? " | অ্যাকাউন্ট পরিষ্কার করার সমস্যা: " + cleanupError : "")
       }, 500);
     }
@@ -211,7 +211,7 @@ export async function onRequest({ request, env }) {
 
     return reply({
       ok: true,
-      message: "রিপোর্টার অ্যাকাউন্ট তৈরি হয়েছে। ইমেইলে আমন্ত্রণ পাঠানো হয়েছে।"
+      message: "প্রতিনিধি অ্যাকাউন্ট তৈরি হয়েছে। ইমেইলে আমন্ত্রণ পাঠানো হয়েছে।"
     });
 
   } catch (error) {

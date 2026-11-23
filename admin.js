@@ -124,7 +124,7 @@ document.querySelector("#logout").addEventListener("click", async () => {
   location.reload();
 });
 
-// রিপোর্টার আবেদন বিভাগ
+// প্রতিনিধি আবেদন বিভাগ
 function createRequestSection() {
   if (document.querySelector("#requestSection")) return;
 
@@ -134,7 +134,7 @@ function createRequestSection() {
     "background:white;padding:18px;border-radius:12px;margin:20px 0;";
 
   const heading = document.createElement("h2");
-  heading.textContent = "👥 রিপোর্টার অ্যাকাউন্টের আবেদন";
+  heading.textContent = "👥 প্রতিনিধি অ্যাকাউন্টের আবেদন";
 
   const refresh = document.createElement("button");
   refresh.className = "button outline";
@@ -290,13 +290,24 @@ async function loadRequests() {
 
   box.textContent = "আবেদন লোড হচ্ছে...";
 
-  const { data, error } = await db
-    .from("registration_requests")
-    .select("*")
-    .eq("status", "pending")
-    .order("created_at", { ascending: false });
-
-  if (error) {
+  let data;
+  try {
+    const { data: sessionData } = await db.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) throw new Error("অ্যাডমিন লগইন করুন।");
+    const response = await fetch("/api/manage-reporters", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token,
+        "apikey": cfg.SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ action: "requests_list" })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "আবেদন লোড করা যায়নি।");
+    data = result.requests || [];
+  } catch (error) {
     box.textContent = "আবেদন লোড করা যায়নি: " + error.message;
     return;
   }
@@ -343,7 +354,7 @@ async function loadRequests() {
 
     const info = document.createElement("p");
     info.textContent =
-      "অনুমোদন করলে রিপোর্টার অ্যাকাউন্ট তৈরি হবে এবং ইমেইলে আমন্ত্রণ যাবে।";
+      "অনুমোদন করলে প্রতিনিধি অ্যাকাউন্ট তৈরি হবে এবং ইমেইলে আমন্ত্রণ যাবে।";
 
     const actions = document.createElement("div");
     actions.className = "actions";
@@ -384,7 +395,7 @@ async function loadRequests() {
   }
 }
 
-// নতুন API দিয়ে রিপোর্টার অনুমোদন
+// নতুন API দিয়ে প্রতিনিধি অনুমোদন
 async function approveReporter(requestId) {
   try {
     const { data, error } = await db.auth.getSession();
@@ -416,7 +427,7 @@ async function approveReporter(requestId) {
 
     alert(
       result.message ||
-      "রিপোর্টার অ্যাকাউন্ট তৈরি হয়েছে। ইমেইল পাঠানো হয়েছে।"
+      "প্রতিনিধি অ্যাকাউন্ট তৈরি হয়েছে। ইমেইল পাঠানো হয়েছে।"
     );
 
     await loadRequests();
@@ -428,18 +439,26 @@ async function approveReporter(requestId) {
 
 // আবেদন বাতিল
 async function changeRequestStatus(id, status) {
-  const { error } = await db
-    .from("registration_requests")
-    .update({ status })
-    .eq("id", id);
-
-  if (error) {
+  try {
+    const { data: sessionData } = await db.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) throw new Error("অ্যাডমিন লগইন করুন।");
+    const response = await fetch("/api/manage-reporters", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token,
+        "apikey": cfg.SUPABASE_ANON_KEY
+      },
+      body: JSON.stringify({ action: "request_status", request_id: id, status })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "পরিবর্তন করা যায়নি।");
+    alert(result.message || "আবেদনের অবস্থা পরিবর্তন হয়েছে।");
+    await loadRequests();
+  } catch (error) {
     alert("পরিবর্তন করা যায়নি: " + error.message);
-    return;
   }
-
-  alert("আবেদন বাতিল করা হয়েছে।");
-  loadRequests();
 }
 
 // নিউজের ট্যাব
@@ -518,7 +537,7 @@ async function loadAdmin() {
 
     const meta = document.createElement("small");
     meta.textContent =
-      "প্রতিবেদক: " + (n.author || "নেই") +
+      "প্রতিনিধি: " + (n.author || "নেই") +
       " · ফোন: " + (n.phone || "নেই") +
       " · " + new Date(n.created_at).toLocaleString("bn-BD");
 
@@ -641,8 +660,14 @@ function setupAdminPublishForm() {
       if (!token) throw new Error("আবার অ্যাডমিন লগইন করুন।");
 
       if (imageFile) {
-        // ছবি আপলোড করা হলে সেটির লিংকটি ছবির URL ঘরের লিংকের পরিবর্তে ব্যবহৃত হবে।
-        values.image_url = await uploadAdminNewsImage(imageFile);
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result).split(",")[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(imageFile);
+        });
+        values.image_base64 = base64;
+        values.image_type = imageFile.type;
       }
 
       const response = await fetch("/api/admin-publish-news", {

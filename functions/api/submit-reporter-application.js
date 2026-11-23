@@ -6,11 +6,12 @@ const allowedOrigins = [
 
 export async function onRequest({ request, env }) {
   const origin = request.headers.get("Origin") || "";
+  const requestOrigin = new URL(request.url).origin;
+  const originAllowed = !origin || origin === requestOrigin || allowedOrigins.includes(origin);
+  const responseOrigin = origin && originAllowed ? origin : requestOrigin;
 
   const corsHeaders = {
-    "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
-      ? origin
-      : allowedOrigins[0],
+    "Access-Control-Allow-Origin": responseOrigin,
     "Access-Control-Allow-Headers": "content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Vary": "Origin"
@@ -33,7 +34,7 @@ export async function onRequest({ request, env }) {
     return reply({ error: "শুধু POST অনুরোধ গ্রহণযোগ্য।" }, 405);
   }
 
-  if (!allowedOrigins.includes(origin)) {
+  if (!originAllowed) {
     return reply({
       error: "এই ওয়েবসাইট থেকে আবেদন গ্রহণ করা যাচ্ছে না।"
     }, 403);
@@ -78,9 +79,13 @@ export async function onRequest({ request, env }) {
     ];
 
     const validPost = [
-      "উপজেলা রিপোর্টার",
-      "জেলা রিপোর্টার",
-      "বিভাগীয় রিপোর্টার"
+      "উপজেলা প্রতিনিধি",
+      "জেলা প্রতিনিধি",
+      "বিভাগীয় প্রতিনিধি",
+      "বিশেষ প্রতিনিধি",
+      "প্রবাসী প্রতিনিধি",
+      "জাতীয় প্রতিনিধি",
+      "আন্তর্জাতিক প্রতিনিধি"
     ].includes(reporterPost);
 
     if (
