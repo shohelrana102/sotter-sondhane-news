@@ -161,7 +161,12 @@
           <input id="adminImageFile" name="image_file" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
           <label for="adminVideoUrl">YouTube ভিডিও লিংক (ঐচ্ছিক)</label>
           <input id="adminVideoUrl" name="video_url" type="url" placeholder="https://www.youtube.com/watch?v=...">
-          <small>YouTube ভিডিওর Share → Copy link থেকে লিংক দিন।
+          <small>YouTube ভিডিওর Share → Copy link থেকে লিংক দিন।</small>
+          <label for="adminCategory">নিউজের ক্যাটাগরি</label>
+          <select id="adminCategory" name="category" required style="display:block;width:100%;box-sizing:border-box;padding:13px;margin:12px 0;border:1px solid #ccc;border-radius:7px;font-size:16px;">
+            <option value="">ক্যাটাগরি নির্বাচন করুন</option>
+            <option value="খেলার খবর">খেলার খবর</option><option value="রাজনৈতিক খবর">রাজনৈতিক খবর</option><option value="আন্তর্জাতিক খবর">আন্তর্জাতিক খবর</option><option value="সড়ক দুর্ঘটনা">সড়ক দুর্ঘটনা</option><option value="আত্মহত্যা">আত্মহত্যা</option><option value="জন দুর্ভোগ">জন দুর্ভোগ</option><option value="সারাদেশ">সারাদেশ</option><option value="গল্প">গল্প</option><option value="কবিতা">কবিতা</option><option value="আইন-কানুন">আইন-কানুন</option><option value="সোশ্যাল মিডিয়া">সোশ্যাল মিডিয়া</option><option value="অর্থনীতি">অর্থনীতি</option><option value="শিক্ষা">শিক্ষা</option><option value="স্বাস্থ্য">স্বাস্থ্য</option><option value="প্রযুক্তি">প্রযুক্তি</option><option value="ধর্ম">ধর্ম</option><option value="বিনোদন">বিনোদন</option><option value="অন্যান্য">অন্যান্য</option>
+          </select>
           <label for="adminBody">নিউজের বিস্তারিত</label>
           <textarea id="adminBody" name="body" minlength="20" maxlength="12000" required rows="8" style="display:block;width:100%;box-sizing:border-box;padding:13px;margin:12px 0;border:1px solid #ccc;border-radius:7px;font-size:16px;"></textarea>
           <button class="button" type="submit">সরাসরি প্রকাশ করুন</button>
