@@ -160,7 +160,7 @@ async function loadNews() {
 
   const { data, error } = await db
     .from("news")
-    .select("id,title,body,author,image_url,video_url,reporter_id,created_at")
+    .select("id,title,body,author,image_url,video_url,category,reporter_id,created_at")
     .eq("status", "approved")
     .order("created_at", { ascending: false })
     .limit(60);
@@ -185,6 +185,14 @@ async function loadNews() {
     const h = document.createElement("h3");
     h.textContent = n.title || "শিরোনাম নেই";
     card.appendChild(h);
+
+    if (n.category) {
+      const category = document.createElement("span");
+      category.className = "news-category";
+      category.textContent = n.category;
+      category.style.cssText = "display:inline-block;background:#e7f2ea;color:#176b43;padding:5px 10px;border-radius:16px;font-size:13px;font-weight:700;margin:0 0 10px;";
+      card.appendChild(category);
+    }
 
     // শিরোনামের নিচে ছবি
     if (n.image_url) {
