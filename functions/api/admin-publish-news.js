@@ -45,9 +45,9 @@ export async function onRequest({ request, env }) {
     const imageBase64 = typeof input.image_base64 === "string" ? input.image_base64 : "";
     const imageType = typeof input.image_type === "string" ? input.image_type : "";
     let uploadedImagePath = "";
-    const video_url = typeof input.video_url === "string" ? input.video_url.trim().slice(0, 500) : "";
+    const category = typeof input.category === "string" ? input.category.trim() : "";\n    const video_url = typeof input.video_url === "string" ? input.video_url.trim().slice(0, 500) : "";
 
-    if (title.length < 5 || title.length > 180 || body.length < 20 || body.length > 12000 || author.length < 2 || author.length > 80) {
+    if (!category) return reply({ error: "নিউজের ক্যাটাগরি নির্বাচন করুন।" }, 400);\n    if (title.length < 5 || title.length > 180 || body.length < 20 || body.length > 12000 || author.length < 2 || author.length > 80) {
       return reply({ error: "শিরোনাম ৫–১৮০ অক্ষর, বিস্তারিত ২০–১২০০০ অক্ষর এবং প্রতিনিধির নাম ২–৮০ অক্ষরের মধ্যে দিন।" }, 400);
     }
     if (image_url && !/^https:\/\//i.test(image_url)) return reply({ error: "ছবির লিংক https:// দিয়ে শুরু হতে হবে।" }, 400);
@@ -117,7 +117,7 @@ export async function onRequest({ request, env }) {
         "Content-Type": "application/json",
         Prefer: "return=representation"
       },
-      body: JSON.stringify({ title, body, author, phone, image_url, video_url, status: "approved" })
+      body: JSON.stringify({ title, body, author, phone, image_url, video_url, category, status: "approved" })
     });
     if (!insertRes.ok) {
       const detail = await insertRes.text();
