@@ -31,7 +31,7 @@ export async function onRequest({ request, env }) {
 
     const adminRes = await fetch(
       `${url}/rest/v1/portal_admins?user_id=eq.${encodeURIComponent(user.id)}&select=user_id`,
-      { headers: { apikey: secret } }
+      { headers: { apikey: secret, Authorization: `Bearer ${secret}` } }
     );
     if (!adminRes.ok) return reply({ error: "অ্যাডমিন যাচাই করা যায়নি।" }, 500);
     if (!(await adminRes.json()).length) return reply({ error: "শুধু অ্যাডমিন এই কাজ করতে পারবেন।" }, 403);
