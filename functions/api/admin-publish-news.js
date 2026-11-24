@@ -1,10 +1,10 @@
-const corsHeaders = {
-  "Access-Control-Allow-Origin": new URL(request.url).origin,
-  "Access-Control-Allow-Headers": "authorization, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
-};
-
 export async function onRequest({ request, env }) {
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": new URL(request.url).origin,
+    "Access-Control-Allow-Headers": "authorization, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin"
+  };
   const reply = (data, status = 200) =>
     new Response(JSON.stringify(data), {
       status,
