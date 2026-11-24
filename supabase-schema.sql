@@ -86,7 +86,9 @@ begin
   return jsonb_build_object('ok',true,'message','নিউজ জমা হয়েছে। অ্যাডমিন অনুমোদনের পর প্রকাশিত হবে।');
 end;
 $$;
-revoke all on function public.submit_news(text,text,text,text,text) from public;
-grant execute on function public.submit_news(text,text,text,text,text) to anon, authenticated;
+-- সংবাদ জমা শুধু অনুমোদিত সাংবাদিকের server-side API দিয়ে হবে।
+-- RPC-টি public/anon/authenticated থেকে বন্ধ রাখা হলো, যাতে লগইন ছাড়া বা
+-- সাধারণ ব্যবহারকারী সরাসরি RPC ডেকে সংবাদ জমা দিতে না পারেন।
+revoke all on function public.submit_news(text,text,text,text,text) from public, anon, authenticated;
 
 -- Admin account promote করার SQL নিচে README-তে দেওয়া আছে।
