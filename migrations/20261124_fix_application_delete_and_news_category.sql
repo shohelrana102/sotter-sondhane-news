@@ -1,0 +1,1 @@
+-- Supabase SQL Editor এ এই migration চালান\nGRANT UPDATE, DELETE ON TABLE public.registration_requests TO service_role;\nALTER TABLE public.news ADD COLUMN IF NOT EXISTS category text;\n
