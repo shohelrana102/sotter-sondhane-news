@@ -110,8 +110,8 @@ document.querySelector("#saveProfilePhoto").addEventListener("click",async()=>{
 });
 document.querySelector("#logout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});
 document.querySelector("#newsForm").addEventListener("submit",async e=>{
- e.preventDefault();const b=e.currentTarget.querySelector("button");b.disabled=true;newsMessage.style.color="";newsMessage.textContent="সংবাদ জমা হচ্ছে...";
- try{const d=Object.fromEntries(new FormData(e.currentTarget));await api("POST",d);e.currentTarget.reset();newsMessage.textContent="সংবাদ জমা হয়েছে। অ্যাডমিন অনুমোদনের পর প্রকাশিত হবে।";await loadPortal();}
+ e.preventDefault();const form=e.currentTarget;const b=form.querySelector("button");b.disabled=true;newsMessage.style.color="";newsMessage.textContent="সংবাদ জমা হচ্ছে...";
+ try{const d=Object.fromEntries(new FormData(form));await api("POST",d);form.reset();newsMessage.textContent="সংবাদ জমা হয়েছে। অ্যাডমিন অনুমোদনের পর প্রকাশিত হবে।";await loadPortal();}
  catch(err){newsMessage.textContent=err.message;newsMessage.style.color=err.message.includes("কপি নিউজ")?"#c40000":"";}finally{b.disabled=false;}
 });
 (async()=>{if(!db){loginMessage.textContent="Supabase সেটিংস পাওয়া যায়নি।";return;}const {data}=await db.auth.getSession();if(data.session)await loadPortal();})();
