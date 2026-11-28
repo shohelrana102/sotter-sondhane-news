@@ -70,6 +70,8 @@ async function enter() {
   loadRequests();
   createReporterManagementSection();
   loadReporters();
+  createSafetyDeskSection();
+  loadSafetyReports();
   loadAdmin();
 }
 
@@ -284,6 +286,119 @@ async function loadReporters() {
       box.appendChild(card);
     }
   } catch (e) { box.textContent = "সমস্যা: " + e.message; }
+}
+
+
+// সাংবাদিক সুরক্ষা ডেস্ক: কেবল অ্যাডমিনের জন্য
+function createSafetyDeskSection() {
+  if (document.querySelector("#safetyDeskAdmin")) return;
+  const section = document.createElement("section");
+  section.id = "safetyDeskAdmin";
+  section.className = "panel";
+  const heading = document.createElement("h2");
+  heading.textContent = "🛡️ সাংবাদিক সুরক্ষা ডেস্ক — গোপন অভিযোগ";
+  const warning = document.createElement("p");
+  warning.textContent = "এই অংশের তথ্য সংবেদনশীল। কেবল অনুমোদিত অ্যাডমিন দেখবেন; অভিযোগের বিবরণ প্রকাশ্যে শেয়ার করবেন না।";
+  warning.className = "error";
+  const refresh = document.createElement("button");
+  refresh.className = "button outline";
+  refresh.type = "button";
+  refresh.textContent = "অভিযোগ রিফ্রেশ করুন";
+  refresh.onclick = loadSafetyReports;
+  const list = document.createElement("div");
+  list.id = "safetyReportsList";
+  list.textContent = "অভিযোগ লোড হচ্ছে...";
+  section.append(heading, warning, refresh, list);
+  const reporterSection = document.querySelector("#reporterManagement");
+  if (reporterSection) reporterSection.after(section);
+  else dash.insertBefore(section, dash.firstChild);
+}
+
+async function safetyDeskRequest(payload) {
+  const { data, error } = await db.auth.getSession();
+  if (error) throw error;
+  const token = data.session?.access_token;
+  if (!token) throw new Error("অ্যাডমিন লগইন করুন।");
+  const response = await fetch("/api/journalist-safety", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, "apikey": cfg.SUPABASE_ANON_KEY },
+    body: JSON.stringify(payload)
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || "অনুরোধ সম্পন্ন হয়নি।");
+  return result;
+}
+
+async function loadSafetyReports() {
+  const box = document.querySelector("#safetyReportsList");
+  if (!box) return;
+  box.textContent = "গোপন অভিযোগ লোড হচ্ছে...";
+  try {
+    const result = await safetyDeskRequest({ action: "admin_list" });
+    box.innerHTML = "";
+    if (!result.reports?.length) {
+      box.textContent = "এখনো কোনো সুরক্ষা অভিযোগ জমা পড়েনি।";
+      return;
+    }
+    for (const report of result.reports) {
+      const card = document.createElement("article");
+      card.className = "admin-card";
+      const title = document.createElement("h3");
+      title.textContent = report.report_type + " — " + report.reporter_name;
+      const meta = document.createElement("p");
+      meta.textContent = "ইমেইল: " + report.reporter_email + " · ফোন: " + (report.reporter_phone || "দেওয়া হয়নি") + " · জমা: " + new Date(report.created_at).toLocaleString("bn-BD");
+      const location = document.createElement("p");
+      location.textContent = "ঘটনার তারিখ: " + (report.incident_date || "উল্লেখ নেই") + " · স্থান: " + (report.incident_location || "উল্লেখ নেই");
+      const details = document.createElement("p");
+      details.textContent = report.description;
+      const help = document.createElement("p");
+      help.textContent = "প্রয়োজনীয় সহায়তা: " + (report.requested_help || "উল্লেখ নেই");
+      const consent = document.createElement("p");
+      consent.textContent = "যোগাযোগের সম্মতি: " + (report.consent_to_contact ? "হ্যাঁ" : "না");
+      card.append(title, meta, location, details, help, consent);
+      if (report.evidence_url) {
+        const evidence = document.createElement("a");
+        evidence.href = report.evidence_url;
+        evidence.target = "_blank";
+        evidence.rel = "noopener noreferrer";
+        evidence.textContent = "প্রমাণ/ঘটনার লিংক খুলুন";
+        card.append(evidence);
+      }
+      const statusLabel = document.createElement("label");
+      statusLabel.textContent = "অভিযোগের অবস্থা";
+      const status = document.createElement("select");
+      status.style.cssText = "display:block;width:100%;padding:10px;margin:7px 0;border:1px solid #ccc;border-radius:7px";
+      for (const [value, label] of [["new","নতুন"],["reviewing","পর্যালোচনাধীন"],["resolved","সমাধান হয়েছে"]]) {
+        const option = document.createElement("option");
+        option.value = value; option.textContent = label; status.append(option);
+      }
+      status.value = report.status;
+      const notesLabel = document.createElement("label");
+      notesLabel.textContent = "অ্যাডমিনের অভ্যন্তরীণ নোট (শুধু অ্যাডমিন দেখবেন)";
+      const notes = document.createElement("textarea");
+      notes.rows = 3; notes.maxLength = 2000; notes.value = report.admin_notes || "";
+      notes.style.cssText = "display:block;width:100%;box-sizing:border-box;padding:10px;margin:7px 0;border:1px solid #ccc;border-radius:7px";
+      const save = document.createElement("button");
+      save.className = "button";
+      save.type = "button";
+      save.textContent = "অবস্থা সংরক্ষণ করুন";
+      save.onclick = async () => {
+        save.disabled = true;
+        try {
+          const result = await safetyDeskRequest({ action: "admin_update", id: report.id, status: status.value, admin_notes: notes.value });
+          alert(result.message || "আপডেট হয়েছে।");
+          await loadSafetyReports();
+        } catch (error) {
+          alert("আপডেট হয়নি: " + error.message);
+          save.disabled = false;
+        }
+      };
+      card.append(statusLabel, status, notesLabel, notes, save);
+      box.append(card);
+    }
+  } catch (error) {
+    box.textContent = "সুরক্ষা অভিযোগ লোড হয়নি: " + error.message;
+  }
 }
 
 // আবেদন লোড
