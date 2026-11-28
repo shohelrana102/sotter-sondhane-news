@@ -699,6 +699,10 @@ function setupAdminPublishForm() {
     const values = Object.fromEntries(new FormData(form));
     const imageFile = document.querySelector("#adminImageFile")?.files?.[0] || null;
     delete values.image_file;
+    if (!String(values.image_url || "").trim() && !imageFile) {
+      say(msg, "সংবাদ প্রকাশের আগে ছবি আপলোড করুন অথবা ছবির লিংক দিন।", "error");
+      return;
+    }
     btn.disabled = true;
     say(msg, imageFile ? "ছবি আপলোড হচ্ছে..." : "নিউজ প্রকাশ হচ্ছে...");
 
