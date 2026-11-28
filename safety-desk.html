@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123524">
+<title>সাংবাদিক সুরক্ষা ডেস্ক | সত্যের সন্ধানে সব সময়</title>
+<link rel="stylesheet" href="style.css">
+<style>
+body{margin:0;background:#f2f6f3;color:#183528;font-family:Arial,sans-serif}
+.wrap{max-width:850px;margin:20px auto;padding:14px}
+.hero{background:linear-gradient(135deg,#123524,#267849);color:white;padding:22px;border-radius:15px;text-align:center}
+.panel{background:white;padding:20px;border-radius:13px;margin:16px 0;box-shadow:0 3px 15px #0000000b}
+label{display:block;font-weight:600;margin:13px 0}
+input,select,textarea{display:block;width:100%;box-sizing:border-box;padding:12px;margin-top:7px;border:1px solid #cbd6ce;border-radius:8px;font-size:16px;background:#fff}
+button{background:#176b3a;color:white;border:0;border-radius:8px;padding:12px 17px;font-size:15px;font-weight:bold}
+button:disabled{opacity:.6}
+.notice{background:#fff7e6;border-left:4px solid #c58b24;padding:12px;border-radius:7px;line-height:1.7}
+.muted{color:#65746a;font-size:14px}
+#message{font-weight:bold;line-height:1.7}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header class="hero"><h1>সত্যের সন্ধানে সব সময়</h1><h2>🛡️ সাংবাদিক সুরক্ষা ডেস্ক</h2><p>সাংবাদিকের নিরাপত্তা, অভিযোগ ও সহায়তার আবেদন</p></header>
+<section class="panel">
+<div class="notice"><strong>গোপনীয়তা ও জরুরি সতর্কতা:</strong> এই ফরমে দেওয়া তথ্য সাধারণ পাঠকের কাছে প্রকাশ করা হবে না। কেবল অনুমোদিত অ্যাডমিন অভিযোগ পর্যালোচনা করবেন। সীমিত অ্যাক্সেসের ব্যবস্থা থাকলেও ইন্টারনেটে সম্পূর্ণ গোপনীয়তার নিশ্চয়তা দেওয়া যায় না। তাৎক্ষণিক বিপদে এই ফরমের উত্তরের জন্য অপেক্ষা না করে স্থানীয় জরুরি সেবা বা বিশ্বস্ত সহায়তার সঙ্গে সরাসরি যোগাযোগ করুন।</div>
+<div id="loginNotice"><p>এই ডেস্ক ব্যবহার করতে সক্রিয় সাংবাদিক অ্যাকাউন্টে লগইন করুন।</p><a href="reporter-dashboard.html">সাংবাদিক পোর্টালে লগইন করুন</a></div>
+<form id="safetyForm" hidden>
+<label>অভিযোগের ধরন
+<select name="report_type" required>
+<option value="">নির্বাচন করুন</option>
+<option>নিরাপত্তা হুমকি</option><option>হামলা বা শারীরিক নিরাপত্তা</option><option>হয়রানি বা নজরদারি</option><option>আইনি সহায়তা</option><option>অন্যান্য</option>
+</select></label>
+<label>ঘটনার তারিখ (ঐচ্ছিক)<input name="incident_date" type="date"></label>
+<label>ঘটনার স্থান (ঐচ্ছিক)<input name="incident_location" maxlength="300" placeholder="যতটুকু জানানো নিরাপদ মনে করেন"></label>
+<label>ঘটনার বিবরণ *<textarea name="description" minlength="50" maxlength="5000" rows="7" required placeholder="কী ঘটেছে, কখন ঘটেছে এবং আপনার নিরাপত্তা নিয়ে কী উদ্বেগ আছে লিখুন।"></textarea></label>
+<label>কী ধরনের সহায়তা প্রয়োজন? (ঐচ্ছিক)<textarea name="requested_help" maxlength="2000" rows="4" placeholder="যেমন: নিরাপত্তা পরামর্শ, আইনি সহায়তার যোগাযোগ বা অভিযোগ পর্যালোচনা"></textarea></label>
+<label>প্রমাণ বা ঘটনার লিংক (ঐচ্ছিক)<input name="evidence_url" type="url" maxlength="500" placeholder="https://..."></label>
+<label style="display:flex;gap:9px;align-items:flex-start;font-weight:normal"><input name="consent_to_contact" type="checkbox" style="width:20px;height:20px;margin:0"> প্রয়োজনে এই অভিযোগ সম্পর্কে আমার সঙ্গে যোগাযোগ করা যেতে পারে।</label>
+<p class="muted">আপনার সম্মতি ছাড়া যোগাযোগের অনুরোধ করা হবে না। এখানে পাসওয়ার্ড, জাতীয় পরিচয়পত্র নম্বর বা অপ্রয়োজনীয় সংবেদনশীল তথ্য দেবেন না।</p>
+<button type="submit">নিরাপদে অভিযোগ জমা দিন</button>
+</form>
+<p id="message" role="status" aria-live="polite"></p>
+</section>
+<p style="text-align:center"><a href="/">মূল নিউজ পোর্টাল</a> · <a href="reporter-dashboard.html">সাংবাদিক পোর্টাল</a></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+const cfg=window.PORTAL_CONFIG||{};
+const db=window.supabase?.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+const form=document.querySelector("#safetyForm"),msg=document.querySelector("#message");
+async function init(){
+ if(!db){msg.textContent="Supabase সেটিংস পাওয়া যায়নি।";return;}
+ const {data}=await db.auth.getSession();
+ if(data.session){document.querySelector("#loginNotice").hidden=true;form.hidden=false;}
+}
+form.addEventListener("submit",async e=>{
+ e.preventDefault();const btn=form.querySelector("button");btn.disabled=true;msg.textContent="অভিযোগ জমা হচ্ছে...";
+ try{
+  const {data}=await db.auth.getSession();const token=data.session?.access_token;
+  if(!token)throw new Error("সাংবাদিক পোর্টালে আবার লগইন করুন।");
+  const values=Object.fromEntries(new FormData(form));
+  values.consent_to_contact=form.elements.consent_to_contact.checked;
+  const response=await fetch("/api/journalist-safety",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token,"apikey":cfg.SUPABASE_ANON_KEY},body:JSON.stringify({...values,action:"submit"})});
+  const result=await response.json();if(!response.ok)throw new Error(result.error||"অভিযোগ জমা হয়নি.");
+  form.reset();msg.textContent=result.message;
+ }catch(error){msg.textContent="জমা হয়নি: "+error.message;}finally{btn.disabled=false;}
+});
+init();
+</script>
+</body>
+</html>
