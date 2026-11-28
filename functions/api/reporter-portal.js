@@ -29,10 +29,17 @@ export async function onRequest({request,env}){
   }
   const title=typeof input.title==="string"?input.title.trim():"";
   const body=typeof input.body==="string"?input.body.trim():"";
-  const image_url=typeof input.image_url==="string"?input.image_url.trim():"";
+  let image_url=typeof input.image_url==="string"?input.image_url.trim():"";
+  const imageBase64=typeof input.image_base64==="string"?input.image_base64:"";
+  const imageType=typeof input.image_type==="string"?input.image_type:"";
   const video_url=typeof input.video_url==="string"?input.video_url.trim():"";
-  if(title.length<5||title.length>180||body.length<20||body.length>12000)return reply({error:"শিরোনাম ও বিস্তারিত সঠিকভাবে লিখুন।"},400);
+  if(!image_url&&!imageBase64)return reply({error:"সংবাদ জমা দেওয়ার জন্য ছবি আপলোড করুন অথবা ছবির https:// লিংক দিন।"},400);
   if(image_url&&!/^https:\/\//i.test(image_url))return reply({error:"ছবির লিংক https:// দিয়ে শুরু হতে হবে।"},400);
+  const imageTypes={"image/jpeg":"jpg","image/png":"png","image/webp":"webp"};
+  if(imageBase64||imageType){
+   if(!imageTypes[imageType]||imageBase64.length>7_000_000)return reply({error:"ছবির ধরন সঠিক নয় অথবা ছবিটি ৫ MB-এর বেশি।"},400);
+  }
+  if(title.length<5||title.length>180||body.length<20||body.length>12000)return reply({error:"শিরোনাম ও বিস্তারিত সঠিকভাবে লিখুন।"},400);
   if(video_url&&!/^https:\/\//i.test(video_url))return reply({error:"ভিডিওর লিংক https:// দিয়ে শুরু হতে হবে।"},400);
 
   // পুরোনো, অপেক্ষমাণ ও প্রকাশিত সংবাদে একই/খুব কাছাকাছি লেখা খোঁজা
@@ -54,8 +61,21 @@ export async function onRequest({request,env}){
     return reply({error:"কপি নিউজ! নিজের ভাষায় ও নিজস্ব তথ্য দিয়ে সংবাদ লিখুন। মিল পাওয়া সংবাদ জমা নেওয়া হয়নি।"},409);
    }
   }
+  let uploadedImagePath="";
+  if(imageBase64){
+   let binary;
+   try{binary=Uint8Array.from(atob(imageBase64),ch=>ch.charCodeAt(0));}catch{return reply({error:"ছবির তথ্য পড়া যায়নি। আবার ছবি নির্বাচন করুন।"},400);}
+   if(!binary.length||binary.length>5*1024*1024)return reply({error:"ছবির আকার ৫ MB-এর বেশি।"},400);
+   uploadedImagePath="reporter-news/"+crypto.randomUUID()+"."+imageTypes[imageType];
+   const storage=await fetch(url+"/storage/v1/object/news-images/"+uploadedImagePath,{method:"POST",headers:{apikey:service,Authorization:"Bearer "+service,"Content-Type":imageType,"x-upsert":"false"},body:binary});
+   if(!storage.ok)return reply({error:"ছবি আপলোড হয়নি: "+(await storage.text()).slice(0,250)},400);
+   image_url=url+"/storage/v1/object/public/news-images/"+uploadedImagePath;
+  }
   const insert=await fetch(url+"/rest/v1/news",{method:"POST",headers:{...headers,Prefer:"return=minimal"},body:JSON.stringify({title,body,author:profile.full_name,phone:profile.phone||"",image_url,video_url,status:"pending",reporter_id:user.id})});
-  if(!insert.ok)return reply({error:"সংবাদ জমা হয়নি। পরে আবার চেষ্টা করুন।"},400);
+  if(!insert.ok){
+   if(uploadedImagePath)await fetch(url+"/storage/v1/object/news-images/"+uploadedImagePath,{method:"DELETE",headers:{apikey:service,Authorization:"Bearer "+service}});
+   return reply({error:"সংবাদ জমা হয়নি। পরে আবার চেষ্টা করুন।"},400);
+  }
   return reply({ok:true,message:"সংবাদ জমা হয়েছে।"});
  }catch(e){return reply({error:"সার্ভারে সমস্যা হয়েছে।"},500);}
 }
