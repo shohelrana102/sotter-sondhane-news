@@ -44,7 +44,8 @@ button:disabled{opacity:.6}
 <form id="newsForm">
 <p class="copy-warning">সতর্কতা: অন্য জায়গা থেকে কপি-পেস্ট করা যাবে না। সংবাদ নিজের ভাষায় লিখুন। কপি বা পুরোনো সংবাদের সঙ্গে বেশি মিল পেলে জমা বাতিল হবে।</p>
 <label>সংবাদের শিরোনাম<input name="title" required minlength="5" maxlength="180"></label>
-<label>সংবাদের ছবি লিংক (ঐচ্ছিক)<input name="image_url" type="url" placeholder="https://..."></label>
+<label>সংবাদের ছবি লিংক (ছবি আপলোড না করলে দিন)<input name="image_url" type="url" placeholder="https://..."></label>
+<label>অথবা সংবাদ ছবি আপলোড করুন *<input name="image_file" id="newsImageFile" type="file" accept="image/jpeg,image/png,image/webp" required><small>JPG, PNG অথবা WEBP; সর্বোচ্চ ৫ MB। ছবি বাধ্যতামূলক।</small></label>
 <label>YouTube ভিডিও লিংক (ঐচ্ছিক)<input name="video_url" type="url" placeholder="https://..."></label>
 <label>সংবাদের বিস্তারিত<textarea name="body" required minlength="20" maxlength="12000" rows="8"></textarea></label>
 <button type="submit">সংবাদ জমা দিন</button>
@@ -111,7 +112,18 @@ document.querySelector("#saveProfilePhoto").addEventListener("click",async()=>{
 document.querySelector("#logout").addEventListener("click",async()=>{await db.auth.signOut();location.reload();});
 document.querySelector("#newsForm").addEventListener("submit",async e=>{
  e.preventDefault();const form=e.currentTarget;const b=form.querySelector("button");b.disabled=true;newsMessage.style.color="";newsMessage.textContent="সংবাদ জমা হচ্ছে...";
- try{const d=Object.fromEntries(new FormData(form));await api("POST",d);form.reset();newsMessage.textContent="সংবাদ জমা হয়েছে। অ্যাডমিন অনুমোদনের পর প্রকাশিত হবে।";await loadPortal();}
+ try{
+  const d=Object.fromEntries(new FormData(form));
+  const imageFile=document.querySelector("#newsImageFile").files[0];
+  if(!String(d.image_url||"").trim()&&!imageFile)throw new Error("সংবাদ জমা দেওয়ার আগে ছবি আপলোড করুন অথবা ছবির https:// লিংক দিন।");
+  if(imageFile){
+   if(!["image/jpeg","image/png","image/webp"].includes(imageFile.type)||imageFile.size>5*1024*1024)throw new Error("JPG, PNG অথবা WEBP ছবি দিন; সর্বোচ্চ ৫ MB।");
+   d.image_base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(",")[1]);reader.onerror=()=>reject(new Error("ছবি পড়া যায়নি। আবার নির্বাচন করুন।"));reader.readAsDataURL(imageFile);});
+   d.image_type=imageFile.type;
+  }
+  delete d.image_file;
+  await api("POST",d);form.reset();newsMessage.textContent="সংবাদ জমা হয়েছে। অ্যাডমিন অনুমোদনের পর প্রকাশিত হবে।";await loadPortal();
+ }
  catch(err){newsMessage.textContent=err.message;newsMessage.style.color=err.message.includes("কপি নিউজ")?"#c40000":"";}finally{b.disabled=false;}
 });
 (async()=>{if(!db){loginMessage.textContent="Supabase সেটিংস পাওয়া যায়নি।";return;}const {data}=await db.auth.getSession();if(data.session)await loadPortal();})();
